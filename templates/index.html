@@ -140,7 +140,7 @@
             display: flex; justify-content: center; align-items: center;
             padding: 15px 0;
             font-weight: 600; 
-            font-size: 1.15rem; 
+            font-size: 2rem; 
             z-index: 10; 
             color: white; 
             text-shadow: 0 0 5px rgba(0,0,0,0.5);
@@ -285,14 +285,14 @@
 
         /* BIGGER GALLERY ICON (Choose File) */
         .gallery-icon {
-            font-size: 38px; 
+            font-size: 65px; 
             color: white;
             position: absolute;
             left: 30px;
             top: 50%; 
             transform: translateY(-50%); 
-            width: 60px; 
-            height: 60px; 
+            width: 100px; 
+            height: 100px; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -471,7 +471,7 @@
             
             <div id="camera-ui">
                 <input type="file" id="galleryInput" accept="image/*" onchange="handleGalleryUpload()">
-                <label for="galleryInput" class="gallery-icon">📁</label>
+                <label for="galleryInput" class="gallery-icon">🖼️</label>
                 <div class="capture-btn" onclick="capturePhoto()"></div>
             </div>
         </div>
