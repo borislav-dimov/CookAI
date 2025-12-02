@@ -3,899 +3,790 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ChefAI Camera</title>
+    <title>ChefAI - Camera</title>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
     <style>
-        /* GLOBAL RESET & BOX SIZING */
-        * { 
-            box-sizing: border-box; 
-            /* Smooth transitions for all style changes */
-            transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        /* --- GLOBAL RESET --- */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* BASE STYLES */
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        /* --- 1. HEADER (Simplified) --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            background-color: #000; /* Dark background for outside app shell */
-            overflow-x: hidden;
+            background-color: #000;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* --- APP SHELL (Mobile Frame) --- */
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
             display: flex;
             flex-direction: column;
             position: relative;
-            color: #1C1C1E; /* Default text color - Dark, crisp */
+            overflow: hidden;
         }
 
-        /* --- DESKTOP CONSTRAINT (RECTANGULAR) --- */
+        /* Desktop Constraint */
         @media (min-width: 900px) {
             body {
-                background-color: #EFEFF4; /* Lighter background for desktop wrapper */
-                justify-content: center;
+                background-color: #f2f2f7;
                 align-items: center;
             }
             .app-shell {
-                max-width: 500px;
-                width: 100%;
-                height: 900px; 
-                min-height: 900px;
-                overflow: hidden; 
-                border-radius: 0; 
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); /* Softer shadow */
-                position: relative;
-            }
-            .screen {
-                height: 900px !important;
-                min-height: 900px !important;
+                max-width: 414px; /* iPhone Max width */
+                height: 896px;
+                border-radius: 40px;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.2);
             }
         }
-        
-        /* --- SCREEN MANAGEMENT --- */
-        .screen {
+
+        /* --- 1. HEADER (Simplified) --- */
+        .top-bar {
+            height: 60px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            z-index: 20;
+            flex-shrink: 0;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #000;
+        }
+
+        /* --- 2. CAMERA VIEWPORT --- */
+        .camera-container {
+            flex-grow: 1;
+            position: relative;
+            background-color: #000;
+            overflow: hidden;
+            margin: 15px 25px;
+            border-radius: 30px;
+            max-height: calc(100% - 60px - 80px - 30px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        #video-feed {
             width: 100%;
-            height: 100%; 
-            min-height: 100vh; 
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* --- 3. VIEWFINDER OVERLAY --- */
+        .overlay-layer {
             position: absolute;
             top: 0;
             left: 0;
-            transition: transform 0.4s ease-out; /* Fluid slide */
-            transform: translateX(100%); 
+            width: 100%;
+            height: 100%;
             display: flex;
-            flex-direction: column; 
-        }
-
-        #camera-screen { transform: translateX(0); background-color: #000; }
-        
-        #results-screen, #settings-screen {
-            background-color: #F2F2F7; /* Light gray background for content screens */
-            overflow-y: auto; 
-            z-index: 10;
-        }
-        
-        #analysis-screen {
-            background-color: #F2F2F7; 
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            text-align: center;
-            z-index: 100;
-        }
-        
-        #cooking-screen {
-            background-color: #FFFFFF; 
-            z-index: 200; 
-            padding: 20px;
-            justify-content: space-between; 
-            height: 100%;
-            width: 100%;
-        }
-
-        /* --- DARK MODE STYLES --- */
-        /* Targets the entire app container and content screens */
-        .app-shell.dark-mode, 
-        .app-shell.dark-mode .screen:not(#camera-screen) {
-            background-color: #121212 !important; 
-            color: #EFEFEF; 
-        }
-        
-        .dark-mode .settings-header,
-        .dark-mode .results-header,
-        .dark-mode .recipe-card,
-        .dark-mode .setting-group,
-        .dark-mode .option-btn {
-            background-color: #1C1C1E !important; 
-            color: #EFEFEF !important;
-            box-shadow: none !important;
-            border-color: #333333 !important;
-        }
-        
-        .dark-mode .close-settings-btn,
-        .dark-mode .cooking-header h2,
-        .dark-mode .cooking-step p,
-        .dark-mode .cooking-controls,
-        .dark-mode .results-branding {
-            color: #EFEFEF !important;
-        }
-
-        .dark-mode h3, 
-        .dark-mode .cooking-header p,
-        .dark-mode .cooking-controls button {
-            color: #A0A0A0 !important; 
-        }
-        
-        .dark-mode .option-btn.active {
-            background-color: #007AFF !important; 
-            color: white !important;
-        }
-        
-        .dark-mode #prev-step-btn { 
-            background-color: #333333 !important; 
-            color: #EFEFEF !important;
-        }
-        /* End Dark Mode Styles */
-
-
-        /* --- HEADERS --- */
-        .app-header {
-            position: absolute; 
-            top: 0; left: 0; width: 100%;
-            display: flex; justify-content: center; align-items: center;
-            padding: 15px 0;
-            font-weight: 600; 
-            font-size: 2rem; 
-            z-index: 10; 
-            color: white; 
-            text-shadow: 0 0 5px rgba(0,0,0,0.5);
-        }
-        
-        /* GEAR ICON (Settings) */
-        .settings-icon {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 1.8rem; 
-            color: white;
+            z-index: 10;
             cursor: pointer;
-            z-index: 20; 
-            text-shadow: 0 0 5px rgba(0,0,0,0.5);
-            -webkit-tap-highlight-color: transparent; 
+            background: rgba(0,0,0,0.1);
         }
 
-        /* --- SETTINGS SCREEN STYLES --- */
-        .settings-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 20px; background-color: #FFFFFF; 
-            box-shadow: 0 1px 0 rgba(0,0,0,0.08); 
-            font-weight: 600; font-size: 1.15rem;
-            flex-shrink: 0; 
+        .center-icon {
+            width: 60px;
+            height: 60px;
+            color: white;
+            opacity: 1;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            margin-bottom: 20px;
         }
-        .close-settings-btn {
-            background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #6C6C70;
-            padding: 0 5px; 
-            line-height: 1; 
-            -webkit-tap-highlight-color: transparent;
+
+        .instruction-text {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
+        .sub-text {
+            color: rgba(255,255,255,0.9);
+            font-size: 1rem;
+            margin-top: 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            font-weight: 500;
+        }
+
+        /* --- 4. BOTTOM NAVIGATION --- */
+        .bottom-nav {
+            height: 80px;
+            background-color: #fff;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 5px;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #999;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            gap: 5px;
+            text-decoration: none;
+        }
+        .nav-item.active {
+            color: #000;
+            font-weight: 600;
+        }
+
+        /* Icon size controlled by font-size */
+        .nav-icon {
+            font-size: 30px;
+            display: block;
+        }
+
+        /* --- SCREENS (Overlays) --- */
+        #results-screen, #analysis-screen, #settings-screen, #cooking-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f2f2f7;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Analysis */
+        #analysis-screen {
+            justify-content: center;
+            align-items: center;
+            background: white;
+        }
+        #analysis-message {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-top: 20px;
+        }
+
+        /* Common Header for Screens */
+        .screen-header-bar {
+            height: 60px;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+        .screen-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* Settings Specifics */
         .settings-content {
             padding: 20px;
-            flex-grow: 1; 
-            overflow-y: auto; 
         }
         .setting-group {
-            background: #FFFFFF; 
-            border-radius: 12px; 
-            padding: 20px; 
-            margin-bottom: 15px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .setting-group h3 { 
-            margin-top: 0; margin-bottom: 15px; 
-            font-size: 0.95rem; 
-            color: #6C6C70; 
+        .setting-group h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.85rem;
+            color: #666;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
-        /* Segmented Controls (Apple-style toggle) */
         .option-row {
-            display: flex; 
-            justify-content: space-between; 
-            margin-bottom: 0; 
-            border: 1px solid #E5E5EA; 
-            border-radius: 8px; 
-            overflow: hidden; 
+            display: flex;
+            background-color: #e5e5ea;
+            border-radius: 9px;
+            padding: 2px;
         }
         .option-btn {
-            flex: 1; 
-            padding: 12px 10px; 
-            border: none; 
-            background: #FFFFFF; 
-            cursor: pointer; 
-            font-weight: 500; 
+            flex: 1;
+            padding: 8px;
             text-align: center;
-            color: #1C1C1E;
-            font-size: 1rem;
-            -webkit-tap-highlight-color: transparent;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #000;
+            transition: all 0.2s ease;
         }
-        .option-btn + .option-btn {
-            border-left: 1px solid #E5E5EA; 
-        }
-        
         .option-btn.active {
-            background-color: #007AFF; /* Apple Blue Accent */
-            color: white; 
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             font-weight: 600;
         }
 
-
-        /* --- RESULTS HEADER --- */
-        .results-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 20px;
-            background-color: #FFFFFF; 
-            box-shadow: 0 1px 0 rgba(0,0,0,0.08); 
-            position: sticky; top: 0; z-index: 5;
-            flex-shrink: 0; 
-        }
-        .results-branding { font-weight: 600; font-size: 1.15rem; color: #1C1C1E; }
-        .button-container { flex-grow: 1; display: flex; justify-content: center; }
-        
-        .new-scan-btn {
-            background-color: #E83D36; /* Punchy Red */
-            color: white; border: none;
-            padding: 10px 35px; 
-            border-radius: 10px; 
-            font-weight: 600; font-size: 1.05rem;
-            cursor: pointer; 
-            box-shadow: 0 3px 8px rgba(232, 61, 54, 0.3); 
-            transition: transform 0.1s ease, background-color 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .new-scan-btn:active { transform: scale(0.97); background-color: #D3342D; }
-
-        /* --- CAMERA UI --- */
-        #video-feed {
-            width: 100%; height: 100%; object-fit: cover;
-            display: block; position: absolute; top: 0; left: 0; z-index: 1;
-        }
-        #camera-ui {
-            position: fixed; bottom: 30px; left: 0; width: 100%; height: 100px; 
-            z-index: 5; display: flex; justify-content: center; align-items: center;
-        }
-        @media (min-width: 900px) { #camera-ui { position: absolute; bottom: 30px; } }
-        
-        /* BIGGER CAPTURE BUTTON (User adjusted) */
-        .capture-btn {
-            width: 120px; /* User change */
-            height: 120px; /* User change */
-            border-radius: 50%;
-            background-color: transparent;
-            border: 4px solid white; 
-            cursor: pointer; 
-            position: relative;
-            display: flex; justify-content: center; align-items: center;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .capture-btn::after {
-            content: '';
-            display: block;
-            width: 90px; /* User change */
-            height: 90px; /* User change */
-            background-color: white;
-            border-radius: 50%;
-        }
-        .capture-btn:active { transform: scale(0.95); }
-
-        /* BIGGER GALLERY ICON (Choose File) */
-        .gallery-icon {
-            font-size: 65px; 
-            color: white;
-            position: absolute;
-            left: 30px;
-            top: 50%; 
-            transform: translateY(-50%); 
-            width: 100px; 
-            height: 100px; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            background: rgba(255,255,255,0.2); 
-            border-radius: 12px; 
-            -webkit-tap-highlight-color: transparent;
-        }
-        .gallery-icon:active { background: rgba(255,255,255,0.3); } 
-
-        #galleryInput { display: none; }
-        
-        #message {
-            position: absolute; top: 10px; width: 90%; left: 50%;
-            transform: translateX(-50%); padding: 12px; border-radius: 10px;
-            text-align: center; font-weight: 500; display: none; z-index: 10;
-            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; opacity: 1; 
-        }
-        .fade-out { opacity: 0 !important; transform: translate(-50%, -10px); }
-        .error { background-color: #FFE6E6; color: #CC0000; border: 1px solid #CC0000; }
-        .success { background-color: #E6FFE6; color: #008000; border: 1px solid #008000; }
-
-        /* --- RECIPE CARDS --- */
-        .recipe-content { 
-            padding: 20px; 
+        /* Results Cards */
+        .recipe-scroll {
+            padding: 20px;
+            overflow-y: auto;
             flex-grow: 1;
         }
-        .recipe-card { 
-            padding: 25px; 
-            margin-bottom: 20px; 
-            border-radius: 16px; 
-            background: #FFFFFF;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); 
+        .recipe-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-        .recipe-image { 
-            width: 100%; 
-            height: 220px; 
-            object-fit: cover; 
-            border-radius: 12px; 
-            margin-bottom: 20px; 
-        }
-        h2 { color: #1C1C1E; margin-top: 1.5rem; margin-bottom: 0.7rem; font-weight: 600; font-size: 1.3rem; }
-        h3 { color: #6C6C70; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1.2rem; margin-bottom: 0.6rem;}
-        .ingredients-list, ol { 
-            list-style-type: none; 
-            padding-left: 0; 
-            color: #48484a; 
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
-        .ingredients-list li, ol li {
-            margin-bottom: 8px; 
-        }
-        
-        .start-cooking-btn {
-            background-color: #007AFF; 
-            color: white; border: none;
-            padding: 12px 20px; 
-            border-radius: 10px; 
-            font-weight: 600; font-size: 1.05rem;
-            cursor: pointer; width: 100%; margin-top: 20px;
-            box-shadow: 0 3px 8px rgba(0, 122, 255, 0.3); 
-            -webkit-tap-highlight-color: transparent;
-        }
-        .start-cooking-btn:active { background-color: #0056B3; transform: scale(0.99); }
-
-        /* --- ANALYSIS TEXT --- */
-        #analysis-message { 
-            color: #6C6C70; 
-            font-size: 1.3rem; 
-            font-weight: 500;
-            margin-top: 20px;
-            padding: 0 20px; 
-            line-height: 1.4;
-        }
-
-        /* --- COOKING SCREEN STYLES --- */
-        .cooking-header {
-            position: relative; 
-            text-align: center; 
-            padding-bottom: 20px; 
-            flex-shrink: 0; 
-        }
-        .cooking-header h2 { 
-            margin: 0; 
-            font-size: 1.6rem; 
-            color: #1C1C1E; 
-            margin-top: 10px;
-            font-weight: 700;
-        }
-        .cooking-header p {
-            color: #6C6C70;
-            font-size: 1rem;
-            margin-top: 5px;
-        }
-        
-        .cooking-step {
-            flex-grow: 1; 
-            display: flex; 
-            flex-direction: column;
-            justify-content: center; 
-            text-align: center;
-            padding: 0 25px; 
-            margin: 20px auto; 
-            overflow-y: auto;
+        .recipe-img {
             width: 100%;
-            max-width: 450px; 
+            height: 200px;
+            object-fit: cover;
         }
-        .cooking-step p {
-            font-size: 1.8rem; 
+        .recipe-body {
+            padding: 20px;
+        }
+
+        /* Cooking Screen */
+        .cook-header {
+            padding: 20px;
+            text-align: center;
+            background: white;
+            border-bottom: 1px solid #eee;
+        }
+        .cook-content {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            overflow-y: auto;
+        }
+        .cook-text {
+            font-size: 1.6rem;
             line-height: 1.4;
-            color: #1C1C1E; 
             font-weight: 600;
         }
-        
-        .cooking-controls {
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            padding: 15px 20px; 
-            border-top: 1px solid #E5E5EA; 
-            flex-shrink: 0; 
-            background-color: #FFFFFF; 
+        .cook-controls {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            background: white;
+            border-top: 1px solid #eee;
         }
-        .cooking-controls button {
-            padding: 15px 25px; 
-            border: none; 
-            border-radius: 12px; 
-            font-size: 1.1rem; 
-            font-weight: 600; 
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-            -webkit-tap-highlight-color: transparent;
-            min-width: 140px; 
-        }
-        #prev-step-btn { 
-            background-color: #E5E5EA; 
-            color: #1C1C1E; 
-        }
-        #prev-step-btn:active { background-color: #D1D1D6; transform: scale(0.99); }
 
-        #next-step-btn { 
-            background-color: #E83D36; 
-            color: white; 
-            box-shadow: 0 3px 8px rgba(232, 61, 54, 0.3); 
+        /* Buttons */
+        .btn-primary {
+            background-color: #000;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
         }
-        #next-step-btn:active { background-color: #D3342D; transform: scale(0.99); }
-        
-        #close-cooking-btn {
-            position: absolute; 
-            top: 0; 
-            right: 0; 
-            background: none;
-            border: none; 
-            font-size: 2.2rem; 
-            cursor: pointer; 
-            color: #6C6C70; 
-            padding: 5px; 
-            line-height: 1;
-            -webkit-tap-highlight-color: transparent;
+        .btn-secondary {
+            background-color: #f2f2f7;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
         }
-        #close-cooking-btn:active { color: #1C1C1E; }
+
+        /* --- DARK MODE OVERRIDES --- */
+        body.dark-mode .app-shell { background-color: #121212; }
+        body.dark-mode .top-bar,
+        body.dark-mode .bottom-nav,
+        body.dark-mode .screen-header-bar,
+        body.dark-mode .cook-header,
+        body.dark-mode .cook-controls {
+            background-color: #1c1c1e;
+            border-color: #333;
+        }
+        body.dark-mode .header-title,
+        body.dark-mode .screen-title,
+        body.dark-mode .nav-item.active,
+        body.dark-mode .recipe-title,
+        body.dark-mode .cook-text,
+        body.dark-mode #cook-title,
+        body.dark-mode #analysis-message,
+        body.dark-mode .nav-item {
+            color: #fff;
+        }
+        body.dark-mode .nav-item { color: #8e8e93; }
+        body.dark-mode .nav-item.active { color: #fff; }
+
+        body.dark-mode #results-screen,
+        body.dark-mode #analysis-screen,
+        body.dark-mode #settings-screen,
+        body.dark-mode #cooking-screen { background-color: #000; }
+        body.dark-mode .setting-group,
+        body.dark-mode .recipe-card {
+            background-color: #1c1c1e;
+        }
+        body.dark-mode .option-row { background-color: #2c2c2e; }
+        body.dark-mode .option-btn { color: #8e8e93; }
+        body.dark-mode .option-btn.active { background-color: #636366; color: #fff; }
+        body.dark-mode .btn-secondary { background-color: #2c2c2e; color: #fff; }
+        body.dark-mode .btn-primary { background-color: #0A84FF; }
+
+        /* Hidden inputs */
+        #galleryInput, #photoCanvas { display: none; }
+
     </style>
 </head>
-<body>
+<body class="{{ 'dark-mode' if userSettings.mode == 'dark' else '' }}">
 
-    <div class="app-shell"> 
-        <canvas id="photoCanvas" style="display: none;"></canvas>
-
-        <div id="camera-screen" class="screen">
-            <div class="app-header">ChefAI</div>
-            <div class="settings-icon" onclick="showScreen('settings')">⚙️</div>
-
-            <video id="video-feed" autoplay playsinline></video>
-            <div id="message" class="message"></div> 
-            
-            <div id="camera-ui">
-                <input type="file" id="galleryInput" accept="image/*" onchange="handleGalleryUpload()">
-                <label for="galleryInput" class="gallery-icon">🖼️</label>
-                <div class="capture-btn" onclick="capturePhoto()"></div>
-            </div>
-        </div>
-
-        <div id="analysis-screen" class="screen" style="transform: translateX(100%);">
-            <div id="analysis-message"></div>
-        </div>
-
-        <div id="results-screen" class="screen" style="transform: translateX(100%);">
-            <div class="results-header">
-                <div style="width: 100px;"></div> 
-                <div class="button-container">
-                    <button class="new-scan-btn" onclick="resetApp()">New Scan</button>
-                </div>
-                <div class="results-branding">ChefAI</div>
-            </div>
-            <div class="recipe-content"> 
-                <div id="results"></div>
-            </div>
-        </div>
-
-        <div id="cooking-screen" class="screen" style="transform: translateX(100%);">
-            <div class="cooking-header">
-                <button id="close-cooking-btn" onclick="closeCookingView()">×</button>
-                <h2 id="cooking-recipe-title"></h2>
-                <p id="cooking-step-counter"></p>
-            </div>
-            <div id="current-instruction" class="cooking-step">
-                <p>— Instruction Text —</p>
-            </div>
-            <div class="cooking-controls">
-                <button id="prev-step-btn" onclick="changeStep(-1)">Back</button>
-                <button id="next-step-btn" onclick="changeStep(1)">Next Step</button>
-            </div>
-        </div>
-
-        <div id="settings-screen" class="screen" style="transform: translateX(100%);">
-            <div class="settings-header">
-                <span>Settings</span>
-                <button class="close-settings-btn" onclick="showScreen('camera')">×</button>
-            </div>
-            <div class="settings-content">
-                
-                <div class="setting-group">
-                    <h3>APPEARANCE</h3>
-                    <div class="option-row">
-                        <div id="opt-light" class="option-btn" onclick="setMode('light')">Light</div>
-                        <div id="opt-dark" class="option-btn" onclick="setMode('dark')">Dark</div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>UNIT SYSTEM</h3>
-                    <div class="option-row">
-                        <div id="opt-metric" class="option-btn" onclick="setUnits('Metric')">Metric (kg, °C)</div>
-                        <div id="opt-imperial" class="option-btn" onclick="setUnits('Imperial')">Imperial (lb, °F)</div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>LANGUAGE / ЕЗИК</h3>
-                    <div class="option-row">
-                        <div id="opt-english" class="option-btn" onclick="setLanguage('English')">English</div>
-                        <div id="opt-bulgarian" class="option-btn" onclick="setLanguage('Bulgarian')">Български</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+<div class="app-shell" id="appShell">
+    <div class="top-bar">
+        <div class="header-title" id="ui-record-ingredients">Take a Photo of Ingredients</div>
     </div>
 
+    <div class="camera-container" id="camera-screen">
+        <video id="video-feed" autoplay playsinline></video>
+        <canvas id="photoCanvas"></canvas>
+        <input type="file" id="galleryInput" accept="image/*" onchange="handleGalleryUpload()">
+
+        <div class="overlay-layer" onclick="capturePhoto()">
+            <div class="instruction-text" id="ui-tap-to-scan">Tap to Scan</div>
+            <div class="sub-text" id="ui-point-camera">Point camera at ingredients</div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="{{ url_for('account_page') }}" class="nav-item {% if active_tab == 'account' %}active{% endif %}">
+            <ion-icon name="person-circle-outline" class="nav-icon"></ion-icon>
+            <span id="ui-account">Account</span>
+        </a>
+
+        <a href="{{ url_for('index_page') }}" class="nav-item {% if active_tab == 'scan' %}active{% endif %}">
+            <ion-icon name="{{ 'camera' if active_tab == 'scan' else 'camera-outline' }}" class="nav-icon"></ion-icon>
+            <span id="ui-scan">Scan</span>
+        </a>
+
+        <a href="#upload" class="nav-item" id="nav-upload-btn" onclick="document.getElementById('galleryInput').click()">
+            <ion-icon name="folder-open-outline" class="nav-icon"></ion-icon>
+            <span id="ui-upload">Upload</span>
+        </a>
+    </div>
+
+    <div id="settings-screen">
+        <div class="screen-header-bar">
+            <span class="screen-title" id="ui-settings-title">Settings</span>
+            <button onclick="hideScreen('settings')" style="border:none; background:none; font-size:24px;">×</button>
+        </div>
+        <div class="settings-content">
+            <div class="setting-group">
+                <h3 id="ui-appearance">Appearance / Външен вид</h3>
+                <div class="option-row">
+                    <div id="opt-light" class="option-btn active" onclick="setMode('light')">Light</div>
+                    <div id="opt-dark" class="option-btn" onclick="setMode('dark')">Dark</div>
+                </div>
+            </div>
+            <div class="setting-group">
+                <h3 id="ui-unit-system">Unit System / Мерни Единици</h3>
+                <div class="option-row">
+                    <div id="opt-metric" class="option-btn active" onclick="setUnits('Metric')">Metric (kg)</div>
+                    <div id="opt-imperial" class="option-btn" onclick="setUnits('Imperial')">Imperial (lb)</div>
+                </div>
+            </div>
+            <div class="setting-group">
+                <h3 id="ui-language-setting">Language / Език</h3>
+                <div class="option-row">
+                    <div id="opt-english" class="option-btn active" onclick="setLanguage('English')">English</div>
+                    <div id="opt-bulgarian" class="option-btn" onclick="setLanguage('Bulgarian')">Български</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="analysis-screen">
+        <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" stroke="#000">
+            <g fill="none" fill-rule="evenodd">
+                <g transform="translate(1 1)" stroke-width="2">
+                    <circle stroke-opacity=".5" cx="24" cy="24" r="24"/>
+                    <path d="M24 0c13.255 0 24 10.745 24 24">
+                        <animateTransform attributeName="transform" type="rotate" from="0 24 24" to="360 24 24" dur="1s" repeatCount="indefinite"/>
+                    </path>
+                </g>
+            </g>
+        </svg>
+        <div id="analysis-message">Analyzing Photo...</div>
+    </div>
+
+    <div id="results-screen">
+        <div class="screen-header-bar">
+            <button class="btn-secondary" id="ui-new-scan-btn" onclick="resetApp()">New Scan</button>
+            <span class="screen-title" id="ui-results-title">ChefAI Results</span>
+            <div style="width:80px"></div>
+        </div>
+        <div class="recipe-scroll" id="results"></div>
+    </div>
+
+    <div id="cooking-screen">
+        <div class="cook-header">
+            <button onclick="hideScreen('cooking')" style="float:right; border:none; background:none; font-size:24px;">×</button>
+            <h2 id="cook-title" style="margin:0; font-size:1.2rem;">Recipe</h2>
+            <small id="cook-counter" style="color:#666;">Step 1</small>
+        </div>
+        <div class="cook-content">
+            <div id="cook-text" class="cook-text"></div>
+        </div>
+        <div class="cook-controls">
+            <button id="btn-prev" class="btn-secondary" onclick="changeStep(-1)">Back</button>
+            <button id="btn-next" class="btn-primary" onclick="changeStep(1)">Next</button>
+        </div>
+    </div>
+
+</div>
+
 <script>
-    // --- GLOBAL STATE ---
-    let videoStream = null;
-    let capturedBlob = null; 
-    let messageTimer;
-    let loadingInterval; 
-    let allGeneratedRecipes = []; 
-    let currentRecipeInstructions = []; 
-    let currentStepIndex = 0; 
-    
-    // User Preferences: Load from localStorage or use defaults
-    let userSettings = {
-        units: localStorage.getItem('chefai_units') || 'Metric',
-        language: localStorage.getItem('chefai_language') || 'English',
-        mode: localStorage.getItem('chefai_mode') || 'light' 
+    // --- DICTIONARY FOR BULGARIAN SUPPORT ---
+    const i18n = {
+        'English': {
+            'record-ingredients': 'Take a Photo of Ingredients',
+            'tap-to-scan': 'Tap to Scan',
+            'point-camera': 'Point camera at ingredients',
+            'account': 'Account',
+            'scan': 'Scan',
+            'upload': 'Upload',
+            'settings-title': 'Settings',
+            'appearance': 'Appearance',
+            'unit-system': 'Unit System',
+            'language-setting': 'Language',
+            'analyzing-photo': 'Analyzing Photo',
+            'results-title': 'ChefAI Results',
+            'new-scan': 'New Scan',
+            'start-cooking': 'Start Cooking',
+            'step': 'Step',
+            'back': 'Back',
+            'next': 'Next',
+            'finish': 'Finish',
+            'recipe': 'Recipe'
+        },
+        'Bulgarian': {
+            'record-ingredients': 'Снимайте Съставките',
+            'tap-to-scan': 'Докоснете за Сканиране',
+            'point-camera': 'Насочете камерата към съставките',
+            'account': 'Профил',
+            'scan': 'Сканиране',
+            'upload': 'Качване',
+            'settings-title': 'Настройки',
+            'appearance': 'Външен вид',
+            'unit-system': 'Мерни Единици',
+            'language-setting': 'Език',
+            'analyzing-photo': 'Анализиране на Снимката',
+            'results-title': 'ChefAI Резултати',
+            'new-scan': 'Ново Сканиране',
+            'start-cooking': 'Започни Готвене',
+            'step': 'Стъпка',
+            'back': 'Назад',
+            'next': 'Напред',
+            'finish': 'Край',
+            'recipe': 'Рецепта'
+        }
     };
 
-    // --- DOM REFERENCES ---
-    const cameraScreen = document.getElementById('camera-screen');
-    const analysisScreen = document.getElementById('analysis-screen');
-    const resultsScreen = document.getElementById('results-screen');
-    const cookingScreen = document.getElementById('cooking-screen');
-    const settingsScreen = document.getElementById('settings-screen');
+    // --- STATE ---
+    let videoStream = null;
+    let userSettings = { 
+        units: localStorage.getItem('chefai_units') || 'Metric', 
+        language: localStorage.getItem('chefai_language') || 'English',
+        mode: localStorage.getItem('chefai_mode') || 'light'
+    };
     
-    const videoFeed = document.getElementById('video-feed');
-    const photoCanvas = document.getElementById('photoCanvas');
-    const messageDiv = document.getElementById('message');
-    const resultsDiv = document.getElementById('results');
-    const analysisMessageDiv = document.getElementById('analysis-message');
+    let currentRecipes = [];
+    let currentInstructions = [];
+    let stepIndex = 0;
 
-    const cookingTitle = document.getElementById('cooking-recipe-title');
-    const stepCounter = document.getElementById('cooking-step-counter');
-    const instructionText = document.getElementById('current-instruction');
-    const prevBtn = document.getElementById('prev-step-btn');
-    const nextBtn = document.getElementById('next-step-btn');
+    // --- DOM REFERENCES ---
+    const screens = {
+        camera: document.getElementById('camera-screen'),
+        analysis: document.getElementById('analysis-screen'),
+        results: document.getElementById('results-screen'),
+        cooking: document.getElementById('cooking-screen'),
+        settings: document.getElementById('settings-screen')
+    };
+    const els = {
+        video: document.getElementById('video-feed'),
+        canvas: document.getElementById('photoCanvas'),
+        results: document.getElementById('results'),
+        analysisMsg: document.getElementById('analysis-message'),
+        cookTitle: document.getElementById('cook-title'),
+        cookText: document.getElementById('cook-text'),
+        cookCounter: document.getElementById('cook-counter'),
+        btnNext: document.getElementById('btn-next'),
+        btnPrev: document.getElementById('btn-prev')
+    };
+    
+    let analysisInterval = null;
 
+    // --- INITIALIZATION & SETTINGS ---
+    
+    // New function to handle all UI translations
+    function translateUI() {
+        const lang = userSettings.language;
+        const dict = i18n[lang] || i18n['English']; // Fallback to English
+        
+        // Main Screen
+        document.getElementById('ui-record-ingredients').textContent = dict['record-ingredients'];
+        document.getElementById('ui-tap-to-scan').textContent = dict['tap-to-scan'];
+        document.getElementById('ui-point-camera').textContent = dict['point-camera'];
+        
+        // Bottom Nav
+        document.getElementById('ui-account').textContent = dict['account'];
+        document.getElementById('ui-scan').textContent = dict['scan'];
+        document.getElementById('ui-upload').textContent = dict['upload'];
+
+        // Settings Screen
+        document.getElementById('ui-settings-title').textContent = dict['settings-title'];
+        document.getElementById('ui-appearance').innerHTML = `${dict['appearance']} / Външен вид`;
+        document.getElementById('ui-unit-system').innerHTML = `${dict['unit-system']} / Мерни Единици`;
+        document.getElementById('ui-language-setting').innerHTML = `${dict['language-setting']} / Език`;
+
+        // Analysis Screen
+        els.analysisMsg.textContent = dict['analyzing-photo'] + (analysisInterval ? '.' : ''); // Handle if already running
+        
+        // Results Screen
+        document.getElementById('ui-new-scan-btn').textContent = dict['new-scan'];
+        document.getElementById('ui-results-title').textContent = dict['results-title'];
+        
+        // Cooking Screen (Title & Counter updated in updateStep/startCooking)
+        els.cookTitle.textContent = dict['recipe'];
+
+        // Re-render recipes if on results screen to update "Start Cooking" button text
+        if (currentRecipes.length > 0 && screens.results.style.transform === 'translateY(0)') {
+            displayRecipes(currentRecipes);
+        }
+    }
+
+    function updateSettingsUI() {
+        document.getElementById('opt-light').className = `option-btn ${userSettings.mode === 'light' ? 'active' : ''}`;
+        document.getElementById('opt-dark').className = `option-btn ${userSettings.mode === 'dark' ? 'active' : ''}`;
+        document.getElementById('opt-metric').className = `option-btn ${userSettings.units === 'Metric' ? 'active' : ''}`;
+        document.getElementById('opt-imperial').className = `option-btn ${userSettings.units === 'Imperial' ? 'active' : ''}`;
+        document.getElementById('opt-english').className = `option-btn ${userSettings.language === 'English' ? 'active' : ''}`;
+        document.getElementById('opt-bulgarian').className = `option-btn ${userSettings.language === 'Bulgarian' ? 'active' : ''}`;
+        
+        if(userSettings.mode === 'dark') document.body.classList.add('dark-mode');
+        else document.body.classList.remove('dark-mode');
+
+        // Apply translations on any settings change
+        translateUI();
+    }
+
+    function setMode(m) { userSettings.mode = m; localStorage.setItem('chefai_mode', m); updateSettingsUI(); }
+    function setUnits(u) { userSettings.units = u; localStorage.setItem('chefai_units', u); updateSettingsUI(); }
+    function setLanguage(l) { 
+        userSettings.language = l; 
+        localStorage.setItem('chefai_language', l); 
+        updateSettingsUI(); 
+        if (currentInstructions.length > 0) updateStep(); // Update cooking step text immediately
+    }
+    updateSettingsUI();
 
     // --- SCREEN NAVIGATION ---
-    function showScreen(screenId) {
-        // Hide all screens
-        cameraScreen.style.transform = 'translateX(100%)';
-        analysisScreen.style.transform = 'translateX(100%)';
-        resultsScreen.style.transform = 'translateX(100%)';
-        cookingScreen.style.transform = 'translateX(100%)';
-        settingsScreen.style.transform = 'translateX(100%)';
-        
-        stopLoadingAnimation(); 
-        stopCamera(); 
-
-        const targetScreen = document.getElementById(screenId + '-screen');
-        if (targetScreen) {
-            targetScreen.style.transform = 'translateX(0)';
-        }
-
-        if (screenId === 'camera') {
-            startCamera();
-        } else if (screenId === 'analysis') {
-            startLoadingAnimation();
-        } else if (screenId === 'settings') {
-            updateSettingsDisplay();
-        }
-    }
-
-    // --- SETTINGS LOGIC ---
-    function updateSettingsDisplay() {
-        // Apply 'active' class based on current userSettings state
-        document.getElementById('opt-metric').classList.toggle('active', userSettings.units === 'Metric');
-        document.getElementById('opt-imperial').classList.toggle('active', userSettings.units === 'Imperial');
-        document.getElementById('opt-english').classList.toggle('active', userSettings.language === 'English');
-        document.getElementById('opt-bulgarian').classList.toggle('active', userSettings.language === 'Bulgarian');
-        
-        // NEW: Mode Toggles
-        document.getElementById('opt-light').classList.toggle('active', userSettings.mode === 'light');
-        document.getElementById('opt-dark').classList.toggle('active', userSettings.mode === 'dark');
-    }
-
-    function setUnits(unitType) {
-        userSettings.units = unitType;
-        localStorage.setItem('chefai_units', unitType); 
-        updateSettingsDisplay();
-    }
-
-    function setLanguage(lang) {
-        userSettings.language = lang;
-        localStorage.setItem('chefai_language', lang); 
-        updateSettingsDisplay();
+    function showScreen(name) {
+        if (screens[name]) screens[name].style.transform = 'translateY(0)';
+        stopCamera();
     }
     
-    function setMode(modeType) {
-        userSettings.mode = modeType;
-        localStorage.setItem('chefai_mode', modeType); 
-        updateSettingsDisplay();
-        applyMode(modeType);
-    }
-
-    function applyMode(modeType) {
-        const appShell = document.querySelector('.app-shell');
-        const isDarkMode = modeType === 'dark';
-
-        // Apply dark-mode class to the main container
-        appShell.classList.toggle('dark-mode', isDarkMode);
-
-        // Handle body background for desktop wrapper consistency
-        if (isDarkMode) {
-            document.body.style.backgroundColor = '#121212';
-        } else if (window.matchMedia("(min-width: 900px)").matches) {
-            // Only apply light gray on desktop wrapper
-            document.body.style.backgroundColor = '#EFEFF4'; 
-        } else {
-            document.body.style.backgroundColor = '#000'; // Default black for mobile camera
+    function hideScreen(name) {
+        if (screens[name]) screens[name].style.transform = 'translateY(100%)';
+        // Only start camera if not showing analysis/results/cooking
+        if (name !== 'analysis' && name !== 'results' && name !== 'cooking') {
+            startCamera();
         }
     }
 
-
-    // --- COOKING STEP NAVIGATION LOGIC ---
-    function openRecipe(index) {
-        const recipe = allGeneratedRecipes[index];
-        if (recipe) {
-            startCookingView(recipe.title, recipe.instructions);
-        }
-    }
-
-    function startCookingView(title, instructions) {
-        currentRecipeInstructions = instructions;
-        currentStepIndex = 0;
-        cookingTitle.textContent = title;
-        displayStep();
-        showScreen('cooking');
-    }
-
-    function closeCookingView() {
-        showScreen('results');
-    }
-
-    function displayStep() {
-        if (!currentRecipeInstructions || currentRecipeInstructions.length === 0) {
-            instructionText.innerHTML = '<p>No instructions available.</p>';
-            stepCounter.textContent = 'Step 0 of 0';
-            prevBtn.disabled = true;
-            nextBtn.disabled = true;
-            return;
-        }
-
-        const currentStep = currentRecipeInstructions[currentStepIndex];
-        instructionText.innerHTML = `<p>${currentStep}</p>`;
-        
-        // Localize Step Counter and Button Text
-        const stepWord = userSettings.language === 'Bulgarian' ? 'Стъпка' : 'Step';
-        const ofWord = userSettings.language === 'Bulgarian' ? 'от' : 'of';
-        stepCounter.textContent = `${stepWord} ${currentStepIndex + 1} ${ofWord} ${currentRecipeInstructions.length}`;
-        
-        prevBtn.disabled = currentStepIndex === 0;
-        
-        if (currentStepIndex === currentRecipeInstructions.length - 1) {
-            nextBtn.textContent = userSettings.language === 'Bulgarian' ? 'Готово!' : "Finished!";
-            nextBtn.style.backgroundColor = '#007AFF'; // Blue for finished
-            nextBtn.onclick = closeCookingView;
-        } else {
-            nextBtn.textContent = userSettings.language === 'Bulgarian' ? 'Следваща' : "Next Step";
-            nextBtn.style.backgroundColor = '#E83D36'; // Red for next step
-            nextBtn.onclick = () => changeStep(1);
-        }
-        
-        prevBtn.textContent = userSettings.language === 'Bulgarian' ? 'Назад' : 'Back';
-    }
-
-    function changeStep(direction) {
-        const newIndex = currentStepIndex + direction;
-        if (newIndex >= 0 && newIndex < currentRecipeInstructions.length) {
-            currentStepIndex = newIndex;
-            displayStep();
-        } 
-    }
-
-    // --- CAMERA & SYSTEM FUNCTIONS ---
+    // --- CAMERA ---
     async function startCamera() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-             displayMessage("Camera not supported", "error");
-             return;
-        }
         try {
-            stopCamera();
-            clearMessage();
-            videoStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } 
-            });
-            videoFeed.srcObject = videoStream;
-            videoFeed.style.display = 'block';
-        } catch (err) {
-            displayMessage("Error accessing camera", "error");
-            console.error("Camera access error:", err);
-        }
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            videoStream = stream;
+            els.video.srcObject = stream;
+        } catch(e) { console.error("Could not start camera:", e); }
     }
 
     function stopCamera() {
-        if (videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-            videoStream = null;
-        }
-        videoFeed.style.display = 'none';
+        if(videoStream) videoStream.getTracks().forEach(t => t.stop());
     }
 
     function capturePhoto() {
-        if (!videoStream) {
-            displayMessage("Camera not active", "error");
+        if(!videoStream) {
+            alert(userSettings.language === 'Bulgarian' ? "Камерата не е активна. Моля, използвайте бутона 'Качване'." : "Camera feed not active. Please use the Upload button.");
             return;
         }
-        const context = photoCanvas.getContext('2d');
-        photoCanvas.width = videoFeed.videoWidth;
-        photoCanvas.height = videoFeed.videoHeight;
-        context.drawImage(videoFeed, 0, 0, photoCanvas.width, photoCanvas.height);
         
-        photoCanvas.toBlob(function(blob) {
-            blob.name = "captured_photo.jpeg"; type = "image/jpeg";
-            capturedBlob = blob;
-            getRecipes(); 
+        const ctx = els.canvas.getContext('2d');
+        els.canvas.width = els.video.videoWidth;
+        els.canvas.height = els.video.videoHeight;
+        ctx.drawImage(els.video, 0, 0);
+        
+        els.canvas.toBlob(blob => { 
+            const file = new File([blob], "capture.jpg", { type: 'image/jpeg' });
+            analyzeImage(file); 
         }, 'image/jpeg', 0.9);
     }
-    
+
     function handleGalleryUpload() {
-        const fileInput = document.getElementById('galleryInput');
-        const [file] = fileInput.files;
-        if (file) {
-            capturedBlob = file;
-            getRecipes();
-        }
-        fileInput.value = null; 
+        const file = document.getElementById('galleryInput').files[0];
+        if(file) analyzeImage(file);
     }
 
-    // NEW LOADING ANIMATION LOGIC
-    function startLoadingAnimation() {
-        let baseText = userSettings.language === 'Bulgarian' 
-            ? "Анализиране на снимката" 
-            : "Analyzing Photo";
-            
-        let dots = 0;
-        stopLoadingAnimation(); 
-        loadingInterval = setInterval(() => {
-            dots = (dots % 3) + 1; 
-            let dotString = ".".repeat(dots);
-            analysisMessageDiv.textContent = baseText + dotString;
-        }, 500);
-    }
-
-    function stopLoadingAnimation() {
-        clearInterval(loadingInterval);
-        analysisMessageDiv.textContent = '';
-    }
-
-    function clearMessage() {
-        clearTimeout(messageTimer);
-        messageDiv.classList.add('fade-out');
-        setTimeout(() => {
-            messageDiv.style.display = 'none'; messageDiv.textContent = '';
-            messageDiv.classList.remove('fade-out'); 
-        }, 500); 
-    }
-
-    function displayMessage(text, type) {
-        clearTimeout(messageTimer);
-        messageDiv.classList.remove('fade-out'); 
-        messageDiv.textContent = text;
-        messageDiv.className = `message ${type}`;
-        messageDiv.style.display = 'block';
-        messageTimer = setTimeout(() => { clearMessage(); }, 5000);
-    }
-
-    // --- API & DISPLAY ---
-    async function getRecipes() {
-        if (!capturedBlob) {
-            displayMessage("No image captured!", "error");
-            showScreen('camera');
-            return;
-        }
+    // --- ANALYSIS API ---
+    async function analyzeImage(file) {
         showScreen('analysis');
-        const formData = new FormData();
-        formData.append('image', capturedBlob, capturedBlob.name || "input_photo.jpeg");
         
-        // Send Settings to Backend
+        let dots = 0;
+        const baseTxt = i18n[userSettings.language]['analyzing-photo'];
+        if (analysisInterval) clearInterval(analysisInterval);
+        analysisInterval = setInterval(() => {
+            dots = (dots + 1) % 4;
+            els.analysisMsg.textContent = baseTxt + '.'.repeat(dots);
+        }, 500);
+
+        const formData = new FormData();
+        formData.append('image', file);
         formData.append('language', userSettings.language);
         formData.append('units', userSettings.units);
 
         try {
-            const response = await fetch('/analyze', { method: 'POST', body: formData });
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({error: 'Unknown server error.'}));
-                throw new Error(errorData.error || `Server Error: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Server returned a non-success response.');
             }
 
-            const recipes = await response.json();
-            stopLoadingAnimation(); 
-            displayRecipes(recipes);
-            showScreen('results');
+            const data = await response.json();
             
-            const recipeContent = document.querySelector('.recipe-content');
-            if (recipeContent) { recipeContent.scrollTo({ top: 0, behavior: 'smooth' }); }
+            clearInterval(analysisInterval); 
+            analysisInterval = null;
 
-        } catch (error) {
-            console.error('Fetch/Processing Error:', error);
-            const errMsg = userSettings.language === 'Bulgarian' ? "Грешка при анализа." : "Analysis failed.";
-            displayMessage(`${errMsg} ${error.message || ""}`, "error");
-            resetApp(); 
-        } 
+            if (data.recipes) {
+                displayRecipes(data.recipes);
+                showScreen('results');
+            } else {
+                alert(userSettings.language === 'Bulgarian' ? "Анализът не успя: Не бяха намерени рецепти." : "Analysis failed: Could not retrieve recipes.");
+                resetApp();
+            }
+        } catch(e) {
+            console.error("API Error:", e);
+            
+            if (analysisInterval) clearInterval(analysisInterval);
+            analysisInterval = null;
+            
+            alert(`${i18n[userSettings.language]['analyzing-photo']} ${i18n[userSettings.language]['finish']}: ${e.message}`);
+            resetApp();
+        }
     }
 
     function displayRecipes(recipes) {
-        resultsDiv.innerHTML = '';
-        allGeneratedRecipes = recipes;
+        currentRecipes = recipes;
+        els.results.innerHTML = '';
+        const btnText = i18n[userSettings.language]['start-cooking'];
 
-        if (recipes.error) {
-            resultsDiv.innerHTML = `<p style="color:red">Error: ${recipes.error}</p>`;
-            return;
-        }
-        
-        // Localize Labels
-        const ingLabel = userSettings.language === 'Bulgarian' ? 'Съставки:' : 'Ingredients:';
-        const instrLabel = userSettings.language === 'Bulgarian' ? 'Инструкции:' : 'Instructions:';
-        const cookBtnLabel = userSettings.language === 'Bulgarian' ? 'Започни готвене' : 'Start Cooking';
-
-        recipes.forEach((recipe, index) => {
-            const card = document.createElement('div');
-            card.className = 'recipe-card';
-            
-            let html = `<img src="${recipe.image_url}" alt="${recipe.title}" class="recipe-image">`;
-            html += `<h2 class="recipe-title">${recipe.title}</h2>`;
-            html += `<p style="color: ${userSettings.mode === 'dark' ? '#A0A0A0' : '#48484a'};">${recipe.description}</p>`;
-            html += `<h3>${ingLabel}</h3><ul class="ingredients-list">`;
-            recipe.ingredients.forEach(ing => { html += `<li>${ing}</li>`; });
-            html += `</ul>`;
-            html += `<h3>${instrLabel}</h3><ol>`;
-            recipe.instructions.forEach(step => { html += `<li>${step}</li>`; });
-            html += `</ol>`;
-            
-            html += `<button class="start-cooking-btn" onclick="openRecipe(${index})">${cookBtnLabel}</button>`;
-            
-            card.innerHTML = html;
-            resultsDiv.appendChild(card);
+        recipes.forEach((r, idx) => {
+            const div = document.createElement('div');
+            div.className = 'recipe-card';
+            div.innerHTML = `
+                <img src="${r.image_url}" class="recipe-img">
+                <div class="recipe-body">
+                    <h3 class="recipe-title">${r.title}</h3>
+                    <p style="color:inherit; font-size:0.9rem; opacity:0.8;">${r.description}</p>
+                    <button class="btn-primary" style="width:100%; margin-top:15px;" onclick="startCooking(${idx})">${btnText}</button>
+                </div>
+            `;
+            els.results.appendChild(div);
         });
     }
 
-    function resetApp() {
-        stopLoadingAnimation();
-        stopCamera();
-        capturedBlob = null;
-        resultsDiv.innerHTML = '';
-        showScreen('camera');
+    // --- COOKING ---
+    function startCooking(idx) {
+        currentInstructions = currentRecipes[idx].instructions;
+        els.cookTitle.textContent = currentRecipes[idx].title;
+        stepIndex = 0;
+        updateStep();
+        showScreen('cooking');
     }
 
-    document.addEventListener('DOMContentLoaded', () => { 
-        applyMode(userSettings.mode); // Apply mode on load
-        updateSettingsDisplay(); 
-        showScreen('camera'); 
-    });
+    function updateStep() {
+        const dict = i18n[userSettings.language];
+        els.cookText.textContent = currentInstructions[stepIndex];
+        const stepWord = dict['step'];
+        els.cookCounter.textContent = `${stepWord} ${stepIndex + 1} / ${currentInstructions.length}`;
+        
+        const backTxt = dict['back'];
+        const nextTxt = dict['next'];
+        const finTxt = dict['finish'];
+
+        els.btnPrev.textContent = backTxt;
+        els.btnPrev.disabled = stepIndex === 0;
+        
+        if(stepIndex === currentInstructions.length - 1) {
+            els.btnNext.textContent = finTxt;
+            els.btnNext.onclick = () => hideScreen('cooking');
+        } else {
+            els.btnNext.textContent = nextTxt;
+            els.btnNext.onclick = () => changeStep(1);
+        }
+    }
+
+    function changeStep(dir) {
+        if(stepIndex + dir >= 0 && stepIndex + dir < currentInstructions.length) {
+            stepIndex += dir;
+            updateStep();
+        }
+    }
+
+    function resetApp() { 
+        hideScreen('results'); 
+        hideScreen('analysis');
+        hideScreen('cooking');
+        startCamera();
+    }
+
+    function checkUrlHash() {
+        const hash = window.location.hash;
+        if (hash === '#settings') {
+            showScreen('settings');
+        } else if (hash === '#upload') {
+            document.getElementById('galleryInput').click();
+        }
+    }
+
+    startCamera();
+    checkUrlHash();
 </script>
 </body>
 </html>

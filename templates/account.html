@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ChefAI - Account</title>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        /* --- GLOBAL & STRUCTURE --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; transition: background-color 0.3s ease, color 0.3s ease; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; padding: 0; background-color: #f2f2f7; 
+            height: 100vh; width: 100vw; overflow: hidden; 
+            display: flex; justify-content: center;
+        }
+        .app-shell {
+            width: 100%; height: 100%; background-color: #f2f2f7;
+            display: flex; flex-direction: column; position: relative; overflow: hidden;
+        }
+        @media (min-width: 900px) {
+            body { align-items: center; }
+            .app-shell { max-width: 414px; height: 896px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        }
+
+        /* --- FIXED ELEMENTS --- */
+        .top-bar {
+            height: 60px; background-color: #fff; display: flex; align-items: center; 
+            justify-content: center; padding: 0 20px; z-index: 20; flex-shrink: 0; 
+            border-bottom: 1px solid #eee;
+        }
+        .header-title { font-size: 1.1rem; font-weight: 600; color: #000; }
+        .bottom-nav {
+            height: 80px; background-color: #fff; display: flex; justify-content: space-around; 
+            align-items: center; padding-bottom: 5px; border-top: 1px solid #eee; flex-shrink: 0;
+            position: relative; /* Needed for z-index */
+            z-index: 20;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; color: #999; cursor: pointer; 
+            font-size: 1rem; font-weight: 500; gap: 5px; text-decoration: none;
+        }
+        /* LIGHT MODE / Default Active Color */
+        .nav-item.active { color: #000; font-weight: 600; } 
+        .nav-icon { font-size: 30px; display: block; }
+        
+        /* --- SCROLLABLE CONTENT --- */
+        .content-container { 
+            flex-grow: 1; /* Takes up all available vertical space */
+            overflow-y: auto; /* Enables vertical scrolling */
+            padding: 20px;
+            min-height: 0; /* Ensures flexibility within the flex column */
+        }
+        .section-title { font-size: 1.6rem; margin: 0 0 25px 0; font-weight: 700; color: #000; }
+        
+        /* --- LOGIN FORM STYLES --- */
+        .login-form input {
+            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; 
+            border-radius: 10px; font-size: 1rem;
+        }
+        .btn-primary {
+            background-color: #000; color: white; border: none; padding: 12px 24px; 
+            border-radius: 30px; font-weight: 600; cursor: pointer; width: 100%;
+            margin-top: 10px;
+        }
+        
+        /* --- ERROR MESSAGE STYLE --- */
+        .error-message {
+            background-color: #fee; color: #cc0000; border: 1px solid #f99; 
+            padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        /* --- DASHBOARD STYLES --- */
+        .user-info {
+            display: flex; align-items: center; background-color: #fff; padding: 15px; 
+            border-radius: 16px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .user-avatar {
+            font-size: 40px; color: #007aff; margin-right: 15px;
+        }
+        .user-greeting h3 { margin: 0; font-size: 1.1rem; color: #000; }
+        .user-greeting p { margin: 2px 0 0 0; font-size: 0.8rem; color: #999; }
+        
+        /* --- SCAN HISTORY STYLES --- */
+        #scans-list { display: flex; flex-direction: column; gap: 15px; }
+        .scan-card {
+            display: flex; align-items: center; background-color: #fff; padding: 10px; 
+            border-radius: 12px; box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            cursor: pointer;
+            text-decoration: none; /* Important for the anchor tag */
+            color: inherit; /* Important for the anchor tag */
+        }
+        .scan-img {
+            width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;
+        }
+        .scan-info h4 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+        .scan-info p { margin: 2px 0 0 0; font-size: 0.8rem; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+        
+        /* --- DARK MODE OVERRIDES --- */
+        body.dark-mode .app-shell { background-color: #000; }
+        body.dark-mode .top-bar, body.dark-mode .bottom-nav { background-color: #1c1c1e; border-color: #333; }
+        body.dark-mode .header-title, body.dark-mode .section-title { color: #fff; }
+        body.dark-mode .content-container { background-color: #000; }
+        body.dark-mode .login-form input { background-color: #2c2c2e; border-color: #3a3a3c; color: #fff; }
+        body.dark-mode .btn-primary { background-color: #0A84FF; }
+        body.dark-mode .user-info, body.dark-mode .scan-card { background-color: #1c1c1e; box-shadow: none; }
+        body.dark-mode .user-greeting h3 { color: #fff; }
+        body.dark-mode .scan-info h4 { color: #fff; }
+        body.dark-mode .scan-info p { color: #aaa; }
+        body.dark-mode .error-message { background-color: #381a1a; border-color: #613838; color: #f99; }
+        
+        /* FIX: Dark mode active nav item color */
+        body.dark-mode .nav-item.active { 
+            color: #fff; /* White color for active item in dark mode */
+        }
+
+    </style>
+</head>
+<body class="{{ 'dark-mode' if userSettings.mode == 'dark' else '' }}">
+
+<div class="app-shell">
+    
+    <div class="top-bar">
+        <div class="header-title" id="ui-header-title">Account</div>
+    </div>
+
+    <div class="content-container">
+        
+        {% if not user.is_logged_in %}
+            <h2 class="section-title" id="ui-welcome-title">Welcome to ChefAI</h2>
+            
+            {# NEW: Display error message if 'error_message' is passed from Flask #}
+            {% if error_message %}
+            <div class="error-message" id="ui-error-message">
+                Invalid username or password. Please try again.
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="{{ url_for('login_or_register') }}" class="login-form">
+                <p style="margin-top: -15px; color: #666; font-size: 0.9rem;" id="ui-login-prompt">
+                    Enter a username and password to log in or create an account.
+                </p>
+                <input type="text" name="username" placeholder="Your Username" required id="ui-username-placeholder">
+                <input type="password" name="password" placeholder="Password" required id="ui-password-placeholder">
+                <button type="submit" class="btn-primary" id="ui-login-btn">Log In / Register</button>
+            </form>
+
+        {% else %}
+            <div class="user-info">
+                <ion-icon name="person-circle-outline" class="user-avatar"></ion-icon>
+                <div class="user-greeting">
+                    <h3 id="ui-greeting-name">Hello, {{ user.username }}!</h3>
+                    <p id="ui-scan-count">You have {{ scans | length }} scans saved.</p>
+                </div>
+            </div>
+
+            <a href="{{ url_for('settings_page') }}" class="scan-card" style="margin-bottom: 30px; text-align: center; justify-content: center; background-color: #007aff; color: white;">
+                <ion-icon name="options-outline" style="font-size: 20px; margin-right: 10px;"></ion-icon>
+                <h4 style="margin: 0; color: white;" id="ui-app-settings">App Settings</h4>
+            </a>
+            
+            <h2 class="section-title" id="ui-scan-history">Scan History</h2>
+            
+            <div id="scans-list">
+                {% if scans | length == 0 %}
+                    <p style="text-align: center; margin-top: 50px; color: #999;" id="ui-no-history">
+                        No scan history found. Start scanning new recipes!
+                    </p>
+                {% else %}
+                    {% for scan in scans %}
+                    <a href="{{ url_for('scan_details_page', scan_id=scan.id) }}" class="scan-card">
+                        <img src="{{ scan.image_url }}" alt="Scan Image" class="scan-img">
+                        <div class="scan-info">
+                            <h4>{{ scan.title }}</h4>
+                            <p>{{ scan.notes }}</p>
+                            <p style="font-size: 0.7rem; color: #aaa;">{{ scan.date }}</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+        {% endif %}
+        
+    </div>
+
+    <div class="bottom-nav">
+        <a href="{{ url_for('account_page') }}" class="nav-item {% if active_tab == 'account' %}active{% endif %}">
+            <ion-icon name="{{ 'person-circle' if active_tab == 'account' else 'person-circle-outline' }}" class="nav-icon"></ion-icon>
+            <span id="ui-nav-account">Account</span>
+        </a>
+        
+        <a href="{{ url_for('index_page') }}" class="nav-item {% if active_tab == 'scan' %}active{% endif %}">
+            <ion-icon name="camera-outline" class="nav-icon"></ion-icon>
+            <span id="ui-nav-scan">Scan</span>
+        </a>
+        
+        <a href="{{ url_for('index_page') }}#upload" class="nav-item">
+            <ion-icon name="folder-open-outline" class="nav-icon"></ion-icon>
+            <span id="ui-nav-upload">Upload</span>
+        </a>
+        
+    </div>
+
+</div>
+
+<script>
+    // --- DICTIONARY FOR BULGARIAN SUPPORT ---
+    const i18n = {
+        'English': {
+            'header-title': 'Account',
+            'welcome-title': 'Welcome to ChefAI',
+            'login-prompt': 'Enter a username and password to log in or create an account.', 
+            'username-placeholder': 'Your Username', 
+            'password-placeholder': 'Password',
+            'login-btn': 'Log In / Register', 
+            'hello-user': 'Hello, ',
+            'error-login': 'Invalid username or password. Please try again.', // NEW KEY
+            'scans-saved-p1': 'You have ',
+            'scans-saved-p2': ' scans saved.',
+            'app-settings': 'App Settings',
+            'scan-history': 'Scan History',
+            'no-history': 'No scan history found. Start scanning new recipes!',
+            'logout-btn': 'Log Out',
+            'nav-account': 'Account',
+            'nav-scan': 'Scan',
+            'nav-upload': 'Upload'
+        },
+        'Bulgarian': {
+            'header-title': 'Профил',
+            'welcome-title': 'Добре дошли в ChefAI',
+            'login-prompt': 'Въведете потребителско име и парола, за да влезете или да създадете акаунт.', 
+            'username-placeholder': 'Вашето Потребителско Име',
+            'password-placeholder': 'Парола', 
+            'login-btn': 'Вход / Регистрация',
+            'hello-user': 'Здравейте, ', 
+            'error-login': 'Невалидно потребителско име или парола. Моля, опитайте отново.', // NEW KEY
+            'scans-saved-p1': 'Имате запазени ',
+            'scans-saved-p2': ' сканирания.',
+            'app-settings': 'Настройки на Приложението',
+            'scan-history': 'История на Сканиранията',
+            'no-history': 'Не е намерена история на сканирания. Започнете да сканирате нови рецепти!',
+            'logout-btn': 'Изход',
+            'nav-account': 'Профил',
+            'nav-scan': 'Сканиране',
+            'nav-upload': 'Качване'
+        }
+    };
+
+    // --- STATE & INITIALIZATION ---
+    function getModeFromStorage() {
+        return localStorage.getItem('chefai_mode') || 'light';
+    }
+
+    function getLangFromStorage() {
+        return localStorage.getItem('chefai_language') || 'English';
+    }
+
+    let userSettings = { 
+        mode: getModeFromStorage(),
+        language: getLangFromStorage()
+    };
+
+    function applyMode() {
+        const currentMode = getModeFromStorage();
+        if (currentMode === 'dark') {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    }
+    
+    function translateUI() {
+        const lang = getLangFromStorage();
+        const dict = i18n[lang] || i18n['English'];
+
+        // Top Bar
+        document.getElementById('ui-header-title').textContent = dict['header-title'];
+
+        // Login State
+        const welcomeTitle = document.getElementById('ui-welcome-title');
+        if (welcomeTitle) {
+            welcomeTitle.textContent = dict['welcome-title'];
+            document.getElementById('ui-login-prompt').textContent = dict['login-prompt'];
+            document.getElementById('ui-username-placeholder').placeholder = dict['username-placeholder'];
+            const passwordPlaceholder = document.getElementById('ui-password-placeholder');
+            if (passwordPlaceholder) passwordPlaceholder.placeholder = dict['password-placeholder'];
+            
+            document.getElementById('ui-login-btn').textContent = dict['login-btn'];
+            
+            // ERROR MESSAGE TRANSLATION (NEW)
+            const errorMessage = document.getElementById('ui-error-message');
+            if (errorMessage) {
+                errorMessage.textContent = dict['error-login'];
+            }
+        }
+
+        // Logged In State
+        const greetingName = document.getElementById('ui-greeting-name');
+        if (greetingName) {
+            // Reconstruct the greeting
+            const username = '{{ user.username }}'; // Get username from Jinja
+            greetingName.textContent = dict['hello-user'] + username + '!';
+
+            // Reconstruct scan count
+            const scanCountElement = document.getElementById('ui-scan-count');
+            const count = '{{ scans | length }}'; // Get count from Jinja
+            scanCountElement.textContent = dict['scans-saved-p1'] + count + dict['scans-saved-p2'];
+            
+            document.getElementById('ui-app-settings').textContent = dict['app-settings'];
+            document.getElementById('ui-scan-history').textContent = dict['scan-history'];
+            
+            const noHistory = document.getElementById('ui-no-history');
+            if (noHistory) noHistory.textContent = dict['no-history'];
+        }
+
+        // Bottom Nav
+        document.getElementById('ui-nav-account').textContent = dict['nav-account'];
+        document.getElementById('ui-nav-scan').textContent = dict['nav-scan'];
+        document.getElementById('ui-nav-upload').textContent = dict['nav-upload'];
+    }
+
+    // Call translation and mode functions on load
+    applyMode();
+    translateUI();
+</script>
+</body>
+</html>
