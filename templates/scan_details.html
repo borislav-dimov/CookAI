@@ -20,6 +20,7 @@
         }
         @media (min-width: 900px) {
             body { align-items: center; }
+            /* Mobile frame constraint */
             .app-shell { max-width: 414px; height: 896px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
         }
         
@@ -50,33 +51,170 @@
             background-color: #000; color: white; border: none; padding: 12px 24px; 
             border-radius: 30px; font-weight: 600; cursor: pointer; width: 100%;
         }
+        .btn-secondary { /* Added styling for secondary buttons (like Back/Finish) */
+            background-color: #e5e5ea;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
         
         /* Navigation (Copy/Paste) */
         .bottom-nav {
             height: 80px; background-color: #fff; display: flex; justify-content: space-around; 
-            align-items: center; padding-bottom: 15px; border-top: 1px solid #eee; flex-shrink: 0;
+            align-items: center; padding-bottom: 5px; border-top: 1px solid #eee; flex-shrink: 0;
         }
         .nav-item {
             display: flex; flex-direction: column; align-items: center; color: #999; cursor: pointer; 
-            font-size: 0.75rem; font-weight: 500; gap: 5px; text-decoration: none;
+            font-size: 1rem; font-weight: 500; gap: 5px; text-decoration: none;
         }
         .nav-item.active { color: #000; font-weight: 600; }
-        .nav-icon { font-size: 24px; display: block; }
+        .nav-icon { font-size: 30px; display: block; }
         
+        /* --- RECIPE STATS STYLES --- */
+        .recipe-header { position: relative; }
+        .recipe-stats {
+            position: absolute; top: 15px; right: 15px; z-index: 10;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .stat-box {
+            padding: 8px 12px; border-radius: 8px; font-weight: 600;
+            font-size: 0.85rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-width: 90px;
+        }
+        .time-box { background-color: #e5e5ea; color: #333; }
+        .skill-box.Easy { background-color: #4CAF50; color: white; }
+        .skill-box.Medium { background-color: #FFC107; color: #333; }
+        .skill-box.Hard { background-color: #F44336; color: white; }
+        
+        /* --- RECIPE COOKING MODE STYLES --- */
+        #recipeModeOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f2f2f7; 
+            z-index: 1000; 
+            display: none; /* Changed initial state to display: none */
+            flex-direction: column; 
+            /* Initial state: Hidden off-screen to the right, to prevent showing up on load */
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* The following media query applies the mobile frame constraints and centering to the overlay */
+        @media (min-width: 900px) {
+            #recipeModeOverlay {
+                max-width: 414px; /* Inherit width from app-shell */
+                height: 896px; /* Inherit height from app-shell */
+                border-radius: 40px; /* Inherit border-radius from app-shell */
+                box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+                /* Center the overlay within the body/desktop view */
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, 100%); /* Start off-screen below center */
+            }
+            #recipeModeOverlay.active {
+                /* Slide up to be centered */
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        /* Activation state (Applies on mobile and desktop) */
+        #recipeModeOverlay.active {
+            display: flex; /* Show the overlay */
+            transform: translateY(0); /* Slide into view (mobile) */
+        }
+        /* Specific override for desktop centering */
+        @media (min-width: 900px) {
+            #recipeModeOverlay.active {
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .mode-content {
+            background-color: transparent;
+            padding: 0; 
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .cook-header {
+            padding: 20px 20px 10px 20px;
+            text-align: center;
+            background: white;
+            border-bottom: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        .cook-header .close-btn {
+            float: right; border: none; background: none; font-size: 24px; color: #999; cursor: pointer;
+        }
+        #modeRecipeTitle {
+            margin: 0; font-size: 1.2rem; font-weight: 600; color: #000;
+        }
+        .step-counter {
+            color: #666; font-size: 0.9rem; font-weight: 500; margin-top: 5px;
+        }
+        .step-instruction {
+            flex-grow: 1; display: flex; align-items: center; justify-content: center;
+            padding: 30px; text-align: center; overflow-y: auto;
+            font-size: 1.6rem; line-height: 1.4; font-weight: 600; color: #000;
+        }
+        /* Style for the final step */
+        .step-instruction.finished-message {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #007aff; /* iOS blue color for success */
+        }
+        .mode-controls {
+            padding: 20px; display: flex; justify-content: space-between;
+            background: white; border-top: 1px solid #eee; flex-shrink: 0;
+            gap: 15px; margin-top: 0;
+        }
+        .mode-controls .btn-primary, .mode-controls .btn-secondary {
+            width: auto;
+            flex-grow: 1;
+        }
+
         /* --- DARK MODE OVERRIDES --- */
-        body.dark-mode .app-shell, body.dark-mode .content-container { background-color: #000; }
-        body.dark-mode .top-bar, body.dark-mode .bottom-nav { background-color: #1c1c1e; border-color: #333; }
-        body.dark-mode .header-title { color: #fff; }
+        body.dark-mode { background-color: #000; }
+        body.dark-mode .app-shell { background-color: #121212; }
+        body.dark-mode .top-bar,
+        body.dark-mode .bottom-nav,
+        body.dark-mode .cook-header,
+        body.dark-mode .mode-controls,
+        body.dark-mode #recipeModeOverlay { /* Added overlay background fix for dark mode */
+            background-color: #1c1c1e; 
+            border-color: #333; 
+        }
+        body.dark-mode .header-title,
+        body.dark-mode .recipe-title,
+        body.dark-mode .recipe-section-title,
+        body.dark-mode .step-instruction,
+        body.dark-mode #modeRecipeTitle { color: #fff; }
         body.dark-mode .back-btn { color: #0A84FF; }
-        body.dark-mode .recipe-card { background: #1c1c1e; }
-        body.dark-mode .recipe-title, body.dark-mode .recipe-section-title { color: #fff; }
-        body.dark-mode .recipe-description, body.dark-mode .recipe-list { color: #e5e5ea; }
         body.dark-mode .nav-item { color: #8e8e93; }
         body.dark-mode .nav-item.active { color: #fff; }
+        body.dark-mode .recipe-card { background-color: #1c1c1e; }
+        body.dark-mode .time-box { background-color: #2c2c2e; color: #fff; }
+        body.dark-mode .skill-box.Medium { color: #333; } /* Keep text dark on yellow background */
         body.dark-mode .btn-primary { background-color: #0A84FF; }
+        body.dark-mode .btn-secondary { background-color: #2c2c2e; color: #fff; }
+        body.dark-mode .cook-header .close-btn { color: #8e8e93; }
+        body.dark-mode .step-counter { color: #8e8e93; }
+        body.dark-mode .step-instruction.finished-message { color: #636366; }
     </style>
 </head>
-<body>
+<body class="{{ 'dark-mode' if userSettings.mode == 'dark' else 'light-mode' }}">
 
 <div class="app-shell" id="appShell">
     
@@ -96,7 +234,22 @@
 
         {% for recipe in scan_data.recipes %}
         <div class="recipe-card">
-            <img src="{{ recipe.image_url }}" class="recipe-img" alt="{{ recipe.title }}">
+            
+            <div class="recipe-header"> 
+                <img src="{{ recipe.image_url }}" class="recipe-img" alt="{{ recipe.title }}">
+
+                <div class="recipe-stats">
+                    
+                    <div class="stat-box time-box">
+                        <ion-icon name="time-outline"></ion-icon> 
+                        {{ recipe.time_minutes }} min
+                    </div>
+
+                    <div class="stat-box skill-box {{ recipe.skill_level }}">
+                        {{ recipe.skill_level }}
+                    </div>
+                </div>
+            </div>
             <div class="recipe-body">
                 <h3 class="recipe-title">{{ recipe.title }}</h3>
                 <p class="recipe-description">{{ recipe.description }}</p>
@@ -115,7 +268,11 @@
                     {% endfor %}
                 </ol>
                 
-                <button class="btn-primary" style="margin-top: 25px;">Start Cooking (Simulate)</button>
+                <button class="btn-primary start-cooking-btn" style="margin-top: 25px;" 
+    data-instructions='{{ recipe.instructions | tojson }}' 
+    data-title="{{ recipe.title | e }}"> 
+    Start Cooking 
+</button>
             </div>
         </div>
         {% endfor %}
@@ -137,13 +294,164 @@
             <span>Upload</span>
         </div>
         
-        <div class="nav-item" onclick="alert('Settings are available on the Scan page!')">
-            <ion-icon name="settings-outline" class="nav-icon"></ion-icon>
-            <span>Settings</span>
-        </div>
     </div>
 
 </div>
+
+<div id="recipeModeOverlay">
+    <div class="mode-content">
+        
+        <div class="cook-header">
+            <button onclick="handleFinish()" class="close-btn">×</button>
+            <h2 id="modeRecipeTitle" style="margin:0;"></h2>
+            <p class="step-counter" id="cookCounter">
+                Step <span id="currentStepNumber">1</span> of <span id="totalStepsNumber"></span>
+            </p>
+        </div>
+
+        <div class="step-instruction" id="currentInstruction"></div>
+
+        <div class="mode-controls">
+            <button class="btn-secondary" id="backBtn" disabled>Back</button>
+            <button class="btn-primary" id="nextBtn">Next</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global state variables for the cooking mode
+    let currentInstructions = [];
+    let currentStepIndex = 0;
+    let recipeTitle = "";
+    const FINISH_MESSAGE = "Congratulations! You finished cooking! Enjoy your meal."; // New final step message
+
+    const overlay = document.getElementById('recipeModeOverlay');
+    const titleElement = document.getElementById('modeRecipeTitle');
+    const stepNumberElement = document.getElementById('currentStepNumber');
+    const totalStepsElement = document.getElementById('totalStepsNumber');
+    const instructionElement = document.getElementById('currentInstruction');
+    const backBtn = document.getElementById('backBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const appShell = document.getElementById('appShell'); 
+
+    // --------------------------------------------------------
+    // Event listener attachment for dynamic elements
+    // --------------------------------------------------------
+    document.addEventListener('DOMContentLoaded', () => {
+        const startButtons = document.querySelectorAll('.start-cooking-btn');
+        
+        startButtons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                const instructionsJSON = this.getAttribute('data-instructions');
+                const title = this.getAttribute('data-title');
+                
+                try {
+                    // Create a new instruction list that includes the final step
+                    let instructions = JSON.parse(instructionsJSON);
+                    instructions.push(FINISH_MESSAGE); // Add the dedicated final message
+                    
+                    startRecipe(instructions, title);
+                } catch (e) {
+                    console.error("Error parsing recipe data:", e);
+                    alert("Error: Could not start recipe due to invalid instruction data.");
+                }
+            });
+        });
+
+        // Set up static listeners for the modal control buttons
+        nextBtn.onclick = handleNext;
+        backBtn.onclick = handleBack;
+    });
+
+    // 1. Function to start the recipe mode
+    function startRecipe(instructions, title) {
+        currentInstructions = instructions;
+        currentStepIndex = 0;
+        recipeTitle = title;
+        
+        if (currentInstructions.length <= 1) { // 1 because the finish message is always added
+            alert("No instructions found for this recipe.");
+            return;
+        }
+        
+        // Setup initial display
+        // The total number of steps is the instructions array length MINUS the finish message
+        totalStepsElement.textContent = currentInstructions.length - 1; 
+        titleElement.textContent = recipeTitle;
+        
+        // Use display: flex to enable the slide-in transition
+        overlay.style.display = 'flex';
+        overlay.classList.add('active');
+        
+        updateStep();
+    }
+
+    // 2. Function to update the step view and button states
+    function updateStep() {
+        const totalSteps = currentInstructions.length;
+
+        if (currentStepIndex >= 0 && currentStepIndex < totalSteps) {
+            
+            instructionElement.textContent = currentInstructions[currentStepIndex];
+
+            // Check if it's the custom final step (the last item in the array)
+            if (currentStepIndex === totalSteps - 1) {
+                // Final Step UI
+                stepNumberElement.textContent = totalSteps - 1; // Keep the number at the last official step count
+                totalStepsElement.textContent = totalSteps - 1;
+
+                instructionElement.classList.add('finished-message');
+                nextBtn.textContent = 'Done';
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-secondary');
+                backBtn.disabled = false; // Allow going back from the final screen
+            } else {
+                // Normal Step UI
+                instructionElement.classList.remove('finished-message');
+                stepNumberElement.textContent = currentStepIndex + 1;
+                totalStepsElement.textContent = totalSteps - 1; // Total steps excluding finish message
+
+                nextBtn.textContent = 'Next';
+                nextBtn.classList.add('btn-primary');
+                nextBtn.classList.remove('btn-secondary');
+
+                backBtn.disabled = currentStepIndex === 0;
+            }
+        }
+    }
+
+    // 3. Handle 'Next' or 'Done' button click
+    function handleNext() {
+        const totalSteps = currentInstructions.length;
+
+        if (currentStepIndex < totalSteps - 1) {
+            currentStepIndex++;
+            updateStep();
+        } else {
+            // FINISH action: The final step button (Done) was pressed
+            handleFinish();
+        }
+    }
+
+    // 4. Handle 'Back' button click
+    function handleBack() {
+        if (currentStepIndex > 0) {
+            currentStepIndex--;
+            updateStep();
+        }
+    }
+
+    // Function to handle closing the cooking mode
+    function handleFinish() {
+        overlay.classList.remove('active'); // Start the slide-out transition
+        
+        // Wait for the transition to finish before hiding the element
+        // This ensures the slide-out animation completes visually
+        setTimeout(() => {
+            overlay.style.display = 'none'; // Completely hide the element after transition
+        }, 300); // 300ms matches the CSS transition duration
+    }
+</script>
 
 </body>
 </html>

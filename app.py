@@ -145,6 +145,8 @@ model = genai.GenerativeModel(
             "description": "Short description",
             "ingredients": ["List", "of", "ingredients"],
             "instructions": ["Step 1", "Step 2"],
+            "time_minutes": 45,       // NEW: Total time in minutes
+            "skill_level": "Medium",  // NEW: Must be 'Easy', 'Medium', or 'Hard'
             "image_url": "temporary_placeholder_will_be_overwritten"
         }
     ]
