@@ -3,363 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ChefAI - Camera</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<title>ChefAI - Camera</title>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-
-    <style>
-        /* --- GLOBAL RESET --- */
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        /* --- 1. HEADER (Simplified) --- */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-        }
-
-        /* --- APP SHELL (Mobile Frame) --- */
-        .app-shell {
-            width: 100%;
-            height: 100%;
-            background-color: #fff;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Desktop Constraint */
-        @media (min-width: 900px) {
-            body {
-                background-color: #f2f2f7;
-                align-items: center;
-            }
-            .app-shell {
-                max-width: 414px; /* iPhone Max width */
-                height: 896px;
-                border-radius: 40px;
-                box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            }
-        }
-
-        /* --- 1. HEADER (Simplified) --- */
-        .top-bar {
-            height: 60px;
-            background-color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 20px;
-            z-index: 20;
-            flex-shrink: 0;
-            position: relative;
-            border-bottom: 1px solid #eee;
-        }
-        .header-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #000;
-        }
-
-        /* --- 2. CAMERA VIEWPORT --- */
-        .camera-container {
-            flex-grow: 1;
-            position: relative;
-            background-color: #000;
-            overflow: hidden;
-            margin: 15px 25px;
-            border-radius: 30px;
-            max-height: calc(100% - 60px - 80px - 30px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        #video-feed {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* --- 3. VIEWFINDER OVERLAY --- */
-        .overlay-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            cursor: pointer;
-            background: rgba(0,0,0,0.1);
-        }
-
-        .center-icon {
-            width: 60px;
-            height: 60px;
-            color: white;
-            opacity: 1;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-            margin-bottom: 20px;
-        }
-
-        .instruction-text {
-            color: white;
-            font-size: 1.2rem;
-            font-weight: 600;
-            text-align: center;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-        .sub-text {
-            color: rgba(255,255,255,0.9);
-            font-size: 1rem;
-            margin-top: 1px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            font-weight: 500;
-        }
-
-        /* --- 4. BOTTOM NAVIGATION --- */
-        .bottom-nav {
-            height: 80px;
-            background-color: #fff;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding-bottom: 5px;
-            border-top: 1px solid #eee;
-            flex-shrink: 0;
-        }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #999;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            gap: 5px;
-            text-decoration: none;
-        }
-        .nav-item.active {
-            color: #000;
-            font-weight: 600;
-        }
-
-        /* Icon size controlled by font-size */
-        .nav-icon {
-            font-size: 30px;
-            display: block;
-        }
-
-        /* --- SCREENS (Overlays) --- */
-        #results-screen, #analysis-screen, #settings-screen, #cooking-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f2f2f7;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Analysis */
-        #analysis-screen {
-            justify-content: center;
-            align-items: center;
-            background: white;
-        }
-        #analysis-message {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #333;
-            margin-top: 20px;
-        }
-
-        /* Common Header for Screens */
-        .screen-header-bar {
-            height: 60px;
-            background: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 1px 0 rgba(0,0,0,0.05);
-            flex-shrink: 0;
-        }
-        .screen-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        /* Settings Specifics */
-        .settings-content {
-            padding: 20px;
-        }
-        .setting-group {
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .setting-group h3 {
-            margin: 0 0 10px 0;
-            font-size: 0.85rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .option-row {
-            display: flex;
-            background-color: #e5e5ea;
-            border-radius: 9px;
-            padding: 2px;
-        }
-        .option-btn {
-            flex: 1;
-            padding: 8px;
-            text-align: center;
-            border-radius: 7px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #000;
-            transition: all 0.2s ease;
-        }
-        .option-btn.active {
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            font-weight: 600;
-        }
-
-        /* Results Cards */
-        .recipe-scroll {
-            padding: 20px;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-        .recipe-card {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .recipe-img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        .recipe-body {
-            padding: 20px;
-        }
-
-        /* Cooking Screen */
-        .cook-header {
-            padding: 20px;
-            text-align: center;
-            background: white;
-            border-bottom: 1px solid #eee;
-        }
-        .cook-content {
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 30px;
-            text-align: center;
-            overflow-y: auto;
-        }
-        .cook-text {
-            font-size: 1.6rem;
-            line-height: 1.4;
-            font-weight: 600;
-        }
-        .cook-controls {
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            background: white;
-            border-top: 1px solid #eee;
-        }
-
-        /* Buttons */
-        .btn-primary {
-            background-color: #000;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .btn-secondary {
-            background-color: #f2f2f7;
-            color: #000;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* --- DARK MODE OVERRIDES --- */
-        body.dark-mode .app-shell { background-color: #121212; }
-        body.dark-mode .top-bar,
-        body.dark-mode .bottom-nav,
-        body.dark-mode .screen-header-bar,
-        body.dark-mode .cook-header,
-        body.dark-mode .cook-controls {
-            background-color: #1c1c1e;
-            border-color: #333;
-        }
-        body.dark-mode .header-title,
-        body.dark-mode .screen-title,
-        body.dark-mode .nav-item.active,
-        body.dark-mode .recipe-title,
-        body.dark-mode .cook-text,
-        body.dark-mode #cook-title,
-        body.dark-mode #analysis-message,
-        body.dark-mode .nav-item {
-            color: #fff;
-        }
-        body.dark-mode .nav-item { color: #8e8e93; }
-        body.dark-mode .nav-item.active { color: #fff; }
-
-        body.dark-mode #results-screen,
-        body.dark-mode #analysis-screen,
-        body.dark-mode #settings-screen,
-        body.dark-mode #cooking-screen { background-color: #000; }
-        body.dark-mode .setting-group,
-        body.dark-mode .recipe-card {
-            background-color: #1c1c1e;
-        }
-        body.dark-mode .option-row { background-color: #2c2c2e; }
-        body.dark-mode .option-btn { color: #8e8e93; }
-        body.dark-mode .option-btn.active { background-color: #636366; color: #fff; }
-        body.dark-mode .btn-secondary { background-color: #2c2c2e; color: #fff; }
-        body.dark-mode .btn-primary { background-color: #0A84FF; }
-
-        /* Hidden inputs */
-        #galleryInput, #photoCanvas { display: none; }
-
-    </style>
 </head>
 <body class="{{ 'dark-mode' if userSettings.mode == 'dark' else '' }}">
 
@@ -372,6 +20,11 @@
         <video id="video-feed" autoplay playsinline></video>
         <canvas id="photoCanvas"></canvas>
         <input type="file" id="galleryInput" accept="image/*" onchange="handleGalleryUpload()">
+
+        <!-- Upload moved here as a floating + button -->
+        <button class="fab-upload" type="button" aria-label="Upload photo" onclick="document.getElementById('galleryInput').click()">
+            <ion-icon name="add" class="fab-icon"></ion-icon>
+        </button>
 
         <div class="overlay-layer" onclick="capturePhoto()">
             <div class="instruction-text" id="ui-tap-to-scan">Tap to Scan</div>
@@ -390,9 +43,9 @@
             <span id="ui-scan">Scan</span>
         </a>
 
-        <a href="#upload" class="nav-item" id="nav-upload-btn" onclick="document.getElementById('galleryInput').click()">
-            <ion-icon name="folder-open-outline" class="nav-icon"></ion-icon>
-            <span id="ui-upload">Upload</span>
+        <a href="{{ url_for('chat_page') }}" class="nav-item {% if active_tab == 'chat' %}active{% endif %}">
+            <ion-icon name="chatbubble-ellipses-outline" class="nav-icon"></ion-icon>
+            <span id="ui-chat">Chat</span>
         </a>
     </div>
 
@@ -442,9 +95,9 @@
 
     <div id="results-screen">
         <div class="screen-header-bar">
-            <button class="btn-secondary" id="ui-new-scan-btn" onclick="resetApp()">New Scan</button>
+            <div style="width:40px"></div>
             <span class="screen-title" id="ui-results-title">ChefAI Results</span>
-            <div style="width:80px"></div>
+            <button class="btn-secondary" id="ui-new-scan-btn" onclick="resetApp()">New Scan</button>
         </div>
         <div class="recipe-scroll" id="results"></div>
     </div>
@@ -475,7 +128,7 @@
             'point-camera': 'Point camera at ingredients',
             'account': 'Account',
             'scan': 'Scan',
-            'upload': 'Upload',
+            'chat': 'Chat',
             'settings-title': 'Settings',
             'appearance': 'Appearance',
             'unit-system': 'Unit System',
@@ -496,7 +149,7 @@
             'point-camera': 'Насочете камерата към съставките',
             'account': 'Профил',
             'scan': 'Сканиране',
-            'upload': 'Качване',
+            'chat': 'Чат',
             'settings-title': 'Настройки',
             'appearance': 'Външен вид',
             'unit-system': 'Мерни Единици',
@@ -562,7 +215,7 @@
         // Bottom Nav
         document.getElementById('ui-account').textContent = dict['account'];
         document.getElementById('ui-scan').textContent = dict['scan'];
-        document.getElementById('ui-upload').textContent = dict['upload'];
+        document.getElementById('ui-chat').textContent = dict['chat'];
 
         // Settings Screen
         document.getElementById('ui-settings-title').textContent = dict['settings-title'];
@@ -618,7 +271,7 @@
     }
     
     function hideScreen(name) {
-        if (screens[name]) screens[name].style.transform = 'translateY(100%)';
+        if (screens[name]) screens[name].style.transform = 'translateY(110%)';
         // Only start camera if not showing analysis/results/cooking
         if (name !== 'analysis' && name !== 'results' && name !== 'cooking') {
             startCamera();
@@ -640,7 +293,9 @@
 
     function capturePhoto() {
         if(!videoStream) {
-            alert(userSettings.language === 'Bulgarian' ? "Камерата не е активна. Моля, използвайте бутона 'Качване'." : "Camera feed not active. Please use the Upload button.");
+            alert(userSettings.language === 'Bulgarian'
+                ? "Камерата не е активна. Моля, използвайте + бутона за качване в ъгъла."
+                : "Camera feed not active. Please use the + upload button in the corner.");
             return;
         }
         
@@ -720,7 +375,16 @@
             const div = document.createElement('div');
             div.className = 'recipe-card';
             div.innerHTML = `
-                <img src="${r.image_url}" class="recipe-img">
+                <div class="recipe-header">
+                    <img src="${r.image_url}" class="recipe-img" alt="${r.title}">
+                    <div class="recipe-stats">
+                        <div class="stat-box time-box">
+                            <ion-icon name="time-outline"></ion-icon>
+                            ${(r.time_minutes ?? 0)} min
+                        </div>
+                        <div class="stat-box skill-box ${r.skill_level || ''}">${r.skill_level || ''}</div>
+                    </div>
+                </div>
                 <div class="recipe-body">
                     <h3 class="recipe-title">${r.title}</h3>
                     <p style="color:inherit; font-size:0.9rem; opacity:0.8;">${r.description}</p>

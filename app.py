@@ -27,6 +27,7 @@ TRANSLATIONS = {
         # Navigation/UI Labels
         "nav_account": "Account",
         "nav_scan": "Scan",
+        "nav_chat": "Chat",
         "nav_upload": "Upload",
         "nav_settings": "Settings",
         "logout": "Log Out",
@@ -67,6 +68,7 @@ TRANSLATIONS = {
         # Navigation/UI Labels
         "nav_account": "Профил",
         "nav_scan": "Сканирай",
+        "nav_chat": "Чат",
         "nav_upload": "Качи",
         "nav_settings": "Настройки",
         "logout": "Изход",
@@ -151,6 +153,28 @@ model = genai.GenerativeModel(
         }
     ]
     """
+)
+
+# --- Separate model for open-ended cooking chat (text + optional image) ---
+chat_generation_config = {
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "top_k": 64,
+    "max_output_tokens": 2048,
+    "response_mime_type": "text/plain",
+}
+
+chat_model = genai.GenerativeModel(
+    model_name="gemini-2.5-flash",
+    safety_settings=safety_settings,
+    generation_config=chat_generation_config,
+    system_instruction=(
+        "You are ChefAI Chat, a friendly expert cooking assistant. "
+        "Answer questions about cooking, ingredients, substitutions, techniques, food safety, and recipes. "
+        "If the user provides a past scan, use it as context. "
+        "Be concise, practical, and give step-by-step instructions when appropriate. "
+        "If the user uploads an image, describe what you see and suggest what to cook or how to improve the dish." 
+    ),
 )
 
 # -----------------------------------------------------
@@ -415,6 +439,98 @@ def settings_page():
     user, userSettings = get_user_context()
     
     return render_template('settings.html', userSettings=userSettings)
+
+
+@app.route('/chat')
+def chat_page():
+    """Renders the cooking chat page."""
+    user, userSettings = get_user_context()
+    translations = TRANSLATIONS.get(userSettings['language'], TRANSLATIONS['English'])
+
+    scan_list_summary = []
+    if user.get('is_logged_in'):
+        user_scans = USERS[user['username']]["scans"]
+        scan_list_summary = format_scans_for_template(user_scans)
+
+    return render_template(
+        'chat.html',
+        active_tab='chat',
+        user=user,
+        scans=scan_list_summary,
+        userSettings=userSettings,
+        t=translations,
+    )
+
+
+@app.route('/chat_api', methods=['POST'])
+def chat_api():
+    """Chat endpoint. Accepts text, optional image, and optional scan_id."""
+    try:
+        message = request.form.get('message', '').strip()
+        scan_id = request.form.get('scan_id')
+        if scan_id == '':
+            scan_id = None
+
+        if not message and 'image' not in request.files:
+            return jsonify({'error': 'Empty message'}), 400
+
+        # Build contextual prompt
+        user, userSettings = get_user_context()
+        lang = (request.form.get('language') or userSettings.get('language', 'English')).strip()
+        # Allow client-side language to override session (settings are stored in localStorage).
+        if lang not in ('English', 'Bulgarian'):
+            lang = 'English'
+        units = session.get('units', 'Metric')
+
+        prompt_parts = []
+        prompt_parts.append(
+            f"User preferences: language={lang}, units={units}. Respond in {('Bulgarian' if lang=='Bulgarian' else 'English')}."
+        )
+
+        # If a scan is selected and user is logged in, attach scan context
+        if scan_id and user.get('is_logged_in'):
+            username = user.get('username')
+            scan = USERS.get(username, {}).get('scans', {}).get(scan_id)
+            if scan:
+                # Compact but useful context
+                recipes = scan.get('recipes', [])
+                scan_context = {
+                    "scan_date": scan.get('date'),
+                    "recipes": [
+                        {
+                            "title": r.get('title'),
+                            "description": r.get('description'),
+                            "ingredients": r.get('ingredients', [])[:30],
+                            "instructions": r.get('instructions', [])[:12],
+                        }
+                        for r in recipes[:2]
+                    ],
+                }
+                prompt_parts.append(
+                    "Past scan context (JSON): " + json.dumps(scan_context, ensure_ascii=False)
+                )
+
+        prompt_parts.append("User message: " + message)
+        full_prompt = "\n\n".join(prompt_parts)
+
+        # Optional image
+        contents = [full_prompt]
+        if 'image' in request.files and request.files['image']:
+            img_file = request.files['image']
+            if img_file.filename:
+                image = Image.open(img_file)
+                contents = [full_prompt, image]
+
+        response = chat_model.generate_content(contents)
+        answer = (response.text or '').strip()
+        if not answer:
+            return jsonify({'error': 'No response from AI'}), 500
+
+        return jsonify({'answer': answer})
+
+    except Exception as e:
+        print(f"Chat API error: {e}")
+        return jsonify({'error': f'Chat failed: {str(e)}'}), 500
 
 @app.route('/analyze', methods=['POST'])
 def analyze_image():

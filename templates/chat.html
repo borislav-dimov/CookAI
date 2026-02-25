@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <title>ChefAI - Chat</title>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body class="{{ 'dark-mode' if userSettings.mode == 'dark' else '' }}">
+
+<div class="app-shell">
+  <div class="top-bar">
+    <div class="header-title" id="ui-chat-title">Chat</div>
+  </div>
+
+  <div class="chat-shell">
+    <div class="chat-log" id="chatLog" aria-live="polite"></div>
+
+    <div class="chat-composer">
+      <input type="file" id="chatImageInput" accept="image/*" style="display:none" />
+
+      <div class="chat-pills" id="chatPills" style="display:none">
+        <div class="pill" id="scanPill" style="display:none">
+          <ion-icon name="document-text" class="pill-ic"></ion-icon>
+          <span class="pill-txt" id="scanPillTxt">Scan</span>
+          <button class="pill-x" type="button" onclick="clearContext()" title="Clear">
+            <ion-icon name="close"></ion-icon>
+          </button>
+        </div>
+
+        <div class="pill" id="imagePill" style="display:none">
+          <ion-icon name="image" class="pill-ic"></ion-icon>
+          <span class="pill-txt" id="imagePillTxt">Image</span>
+          <button class="pill-x" type="button" onclick="removeImage()" title="Remove">
+            <ion-icon name="close"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="composer-inner">
+        <button class="composer-btn" type="button" id="sendBtn" onclick="sendMessage()" title="Send">
+          <ion-icon name="arrow-forward"></ion-icon>
+        </button>
+
+        <textarea id="chatInput" rows="1" placeholder="Ask anything about cooking..." oninput="autoGrow(this)" onkeydown="handleKey(event)"></textarea>
+
+        <div class="plus-wrap">
+          <button class="composer-btn" type="button" id="plusBtn" onclick="togglePlusMenu(true)" title="Add">
+            <ion-icon name="add"></ion-icon>
+          </button>
+
+          <div class="plus-menu" id="plusMenu" aria-hidden="true">
+            <button class="plus-item" type="button" onclick="pickImage()">
+              <ion-icon name="image-outline"></ion-icon>
+              <span id="ui-plus-image">Image</span>
+            </button>
+            <button class="plus-item" type="button" onclick="openContextSheet()" {{ '' if user.is_logged_in else 'disabled' }}>
+              <ion-icon name="time-outline"></ion-icon>
+              <span id="ui-plus-scans">Past scans</span>
+            </button>
+            {% if not user.is_logged_in %}
+              <div class="plus-hint" id="ui-plus-hint">Log in to use past scans as context.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-backdrop" id="contextBackdrop" onclick="closeContextSheet()" style="display:none"></div>
+  <div class="sheet" id="contextSheet" style="display:none" role="dialog" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="ui-context-title">Choose a past scan</div>
+
+    <div class="sheet-row">
+      <select id="scanSelect" class="glass-select" {{ '' if user.is_logged_in else 'disabled' }}>
+        <option value="">No scan selected</option>
+        {% if scans %}
+          {% for scan in scans %}
+            <option value="{{ scan.id }}">{{ scan.title }} • {{ scan.date }}</option>
+          {% endfor %}
+        {% endif %}
+      </select>
+      <button class="icon-btn" type="button" id="clearContextBtn" title="Clear" onclick="clearContext()">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-secondary" type="button" onclick="closeContextSheet()" id="ui-context-done">Done</button>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="{{ url_for('account_page') }}" class="nav-item {% if active_tab == 'account' %}active{% endif %}">
+      <ion-icon name="person-circle-outline" class="nav-icon"></ion-icon>
+      <span id="ui-nav-account">Account</span>
+    </a>
+
+    <a href="{{ url_for('index_page') }}" class="nav-item {% if active_tab == 'scan' %}active{% endif %}">
+      <ion-icon name="camera-outline" class="nav-icon"></ion-icon>
+      <span id="ui-nav-scan">Scan</span>
+    </a>
+
+    <a href="{{ url_for('chat_page') }}" class="nav-item {% if active_tab == 'chat' %}active{% endif %}">
+      <ion-icon name="chatbubble-ellipses" class="nav-icon"></ion-icon>
+      <span id="ui-nav-chat">Chat</span>
+    </a>
+  </div>
+</div>
+
+<script>
+  const i18n = {
+    English: {
+      title: 'Chat',
+      placeholder: 'Ask anything about cooking...',
+      navAccount: 'Account',
+      navScan: 'Scan',
+      navChat: 'Chat',
+      plusImage: 'Image',
+      plusScans: 'Past scans',
+      plusHint: 'Log in to use past scans as context.',
+      contextTitle: 'Choose a past scan',
+      done: 'Done',
+      noScan: 'No scan selected',
+      imageLabel: 'Image',
+      scanLabel: 'Scan'
+    },
+    Bulgarian: {
+      title: 'Чат',
+      placeholder: 'Питай всичко за готвене...',
+      navAccount: 'Профил',
+      navScan: 'Сканиране',
+      navChat: 'Чат',
+      plusImage: 'Снимка',
+      plusScans: 'Предишни сканирания',
+      plusHint: 'Влезте в профила си, за да ползвате предишни сканирания като контекст.',
+      contextTitle: 'Избери предишно сканиране',
+      done: 'Готово',
+      noScan: 'Няма избрано сканиране',
+      imageLabel: 'Снимка',
+      scanLabel: 'Сканиране'
+    }
+  };
+
+  let pickedImageFile = null;
+  let isPrinting = false;
+
+  function getLangFromStorage(){
+    return localStorage.getItem('chefai_language') || 'English';
+  }
+
+  function applyMode(){
+    const mode = localStorage.getItem('chefai_mode') || 'light';
+    if (mode === 'dark') document.body.classList.add('dark-mode');
+    else document.body.classList.remove('dark-mode');
+  }
+
+  function translateUI(){
+    const lang = getLangFromStorage();
+    const dict = i18n[lang] || i18n.English;
+
+    document.getElementById('ui-chat-title').textContent = dict.title;
+    document.getElementById('ui-nav-account').textContent = dict.navAccount;
+    document.getElementById('ui-nav-scan').textContent = dict.navScan;
+    document.getElementById('ui-nav-chat').textContent = dict.navChat;
+
+    document.getElementById('chatInput').placeholder = dict.placeholder;
+    document.getElementById('ui-plus-image').textContent = dict.plusImage;
+    document.getElementById('ui-plus-scans').textContent = dict.plusScans;
+    const hint = document.getElementById('ui-plus-hint');
+    if (hint) hint.textContent = dict.plusHint;
+
+    document.getElementById('ui-context-title').textContent = dict.contextTitle;
+    document.getElementById('ui-context-done').textContent = dict.done;
+
+    const sel = document.getElementById('scanSelect');
+    if (sel && sel.options && sel.options.length) sel.options[0].textContent = dict.noScan;
+  }
+
+  function autoGrow(el){
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  }
+
+  function handleKey(e){
+    if (e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function escapeHtml(str){
+    return (str || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  // Minimal formatting: bold with *text* or **text**, lists, paragraphs, line breaks.
+  function formatMessage(text){
+    const raw = (text || '').replace(/\r\n/g, '\n');
+
+    // Build blocks (ul + paragraphs)
+    const lines = raw.split('\n');
+    let html = '';
+    let inList = false;
+
+    function closeList(){
+      if (inList){ html += '</ul>'; inList = false; }
+    }
+
+    for (let i=0;i<lines.length;i++){
+      const line = lines[i];
+      const isBlank = line.trim() === '';
+      const m = line.match(/^\s*([-*•])\s+(.*)$/);
+
+      if (m){
+        if (!inList){ html += '<ul class="msg-list">'; inList = true; }
+        html += `<li>${escapeHtml(m[2])}</li>`;
+        continue;
+      }
+
+      if (isBlank){
+        closeList();
+        html += '<div class="msg-spacer"></div>';
+        continue;
+      }
+
+      closeList();
+      html += `<div class="msg-line">${escapeHtml(line)}</div>`;
+    }
+
+    closeList();
+
+    // Bold (after escaping)
+    html = html
+      .replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(?!\s)([^*]+?)\*(?!\*)/g, '<strong>$1</strong>');
+
+    return html;
+  }
+
+  function shouldStickToBottom(){
+    const log = document.getElementById('chatLog');
+    const dist = log.scrollHeight - log.scrollTop - log.clientHeight;
+    return dist < 140;
+  }
+
+  function scrollToBottom(force=false){
+    const log = document.getElementById('chatLog');
+    if (force || shouldStickToBottom()) log.scrollTop = log.scrollHeight;
+  }
+
+  function ensurePillsVisibility(){
+    const pills = document.getElementById('chatPills');
+    const scanShown = document.getElementById('scanPill').style.display !== 'none';
+    const imgShown = document.getElementById('imagePill').style.display !== 'none';
+    pills.style.display = (scanShown || imgShown) ? 'flex' : 'none';
+  }
+
+  function addMessage(role, contentHtml, opts={}){
+    const log = document.getElementById('chatLog');
+    const el = document.createElement('div');
+    el.className = 'msg ' + (role === 'user' ? 'user' : 'assistant');
+
+    if (opts.typing){
+      el.innerHTML = `
+        <div class="typing">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>`;
+    } else {
+      el.innerHTML = contentHtml;
+    }
+
+    log.appendChild(el);
+    scrollToBottom(true);
+    return el;
+  }
+
+  function setScanContextLabel(){
+    const dict = i18n[getLangFromStorage()] || i18n.English;
+    const sel = document.getElementById('scanSelect');
+    const pill = document.getElementById('scanPill');
+    if (!sel || !sel.value){
+      pill.style.display = 'none';
+      ensurePillsVisibility();
+      return;
+    }
+    const txt = sel.options[sel.selectedIndex]?.textContent || dict.scanLabel;
+    document.getElementById('scanPillTxt').textContent = txt;
+    pill.style.display = 'flex';
+    ensurePillsVisibility();
+  }
+
+  function pickImage(){
+    closePlusMenu();
+    document.getElementById('chatImageInput').click();
+  }
+
+  document.getElementById('chatImageInput').addEventListener('change', () => {
+    const input = document.getElementById('chatImageInput');
+    if (!input.files || !input.files[0]) return;
+    pickedImageFile = input.files[0];
+
+    const dict = i18n[getLangFromStorage()] || i18n.English;
+    document.getElementById('imagePillTxt').textContent = pickedImageFile.name || dict.imageLabel;
+    document.getElementById('imagePill').style.display = 'flex';
+    ensurePillsVisibility();
+  });
+
+  function removeImage(){
+    pickedImageFile = null;
+    const input = document.getElementById('chatImageInput');
+    input.value = '';
+    document.getElementById('imagePill').style.display = 'none';
+    ensurePillsVisibility();
+  }
+
+  function clearContext(){
+    const sel = document.getElementById('scanSelect');
+    if (sel) sel.value = '';
+    setScanContextLabel();
+  }
+
+  function openContextSheet(){
+    closePlusMenu();
+    const sheet = document.getElementById('contextSheet');
+    const bd = document.getElementById('contextBackdrop');
+    sheet.style.display = 'block';
+    bd.style.display = 'block';
+    setTimeout(() => sheet.classList.add('open'), 10);
+  }
+
+  function closeContextSheet(){
+    const sheet = document.getElementById('contextSheet');
+    const bd = document.getElementById('contextBackdrop');
+    sheet.classList.remove('open');
+    setTimeout(() => {
+      sheet.style.display = 'none';
+      bd.style.display = 'none';
+    }, 160);
+    setScanContextLabel();
+  }
+
+  function togglePlusMenu(open){
+    const menu = document.getElementById('plusMenu');
+    const isOpen = menu.classList.contains('open');
+    if (open && !isOpen){
+      menu.classList.add('open');
+      menu.setAttribute('aria-hidden', 'false');
+      document.addEventListener('click', onOutsidePlus, {capture:true});
+    } else if (!open && isOpen){
+      closePlusMenu();
+    } else if (open && isOpen){
+      closePlusMenu();
+    }
+  }
+
+  function closePlusMenu(){
+    const menu = document.getElementById('plusMenu');
+    menu.classList.remove('open');
+    menu.setAttribute('aria-hidden', 'true');
+    document.removeEventListener('click', onOutsidePlus, {capture:true});
+  }
+
+  function onOutsidePlus(e){
+    const wrap = document.querySelector('.plus-wrap');
+    if (wrap && !wrap.contains(e.target)) closePlusMenu();
+  }
+
+  async function typeInto(el, fullText){
+    const html = formatMessage(fullText);
+
+    // Typewriter effect on plain text, while maintaining formatting at end.
+    // We'll type linearly, then swap to formatted HTML.
+    const plain = (fullText || '').toString();
+    const stick = shouldStickToBottom();
+
+    el.textContent = '';
+    let i = 0;
+    isPrinting = true;
+
+    while (i < plain.length){
+      // chunk size for speed
+      const chunk = plain.slice(i, i + 6);
+      el.textContent += chunk;
+      i += 6;
+      if (stick) scrollToBottom(true);
+      await new Promise(r => setTimeout(r, 12));
+    }
+
+    // Swap to nicely formatted HTML at the end
+    el.innerHTML = html;
+    if (stick) scrollToBottom(true);
+    isPrinting = false;
+  }
+
+  async function sendMessage(){
+    if (isPrinting) return;
+
+    const input = document.getElementById('chatInput');
+    const text = (input.value || '').trim();
+
+    if (!text && !pickedImageFile) return;
+
+    addMessage('user', formatMessage(text || (pickedImageFile ? '[Image]' : '')));
+
+    input.value = '';
+    autoGrow(input);
+
+    const typingMsg = addMessage('assistant', '', {typing:true});
+
+    const fd = new FormData();
+    fd.append('message', text);
+    fd.append('language', getLangFromStorage());
+
+    const scanSelect = document.getElementById('scanSelect');
+    if (scanSelect && scanSelect.value) fd.append('scan_id', scanSelect.value);
+
+    if (pickedImageFile) fd.append('image', pickedImageFile);
+
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+
+    try {
+      // FIX IS HERE: Used double quotes for the outer string
+      const res = await fetch("{{ url_for('chat_api') }}", { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (!res.ok || data.error){
+        typingMsg.innerHTML = formatMessage(data.error || 'Something went wrong.');
+      } else {
+        await typeInto(typingMsg, data.answer || '');
+      }
+    } catch (err){
+      typingMsg.innerHTML = formatMessage('Network error. Please try again.');
+    } finally {
+      sendBtn.disabled = false;
+      if (pickedImageFile) removeImage();
+      scrollToBottom(true);
+    }
+  }
+
+  function greet(){
+    const lang = getLangFromStorage();
+    const isBg = (lang === 'Bulgarian');
+    const greetText = isBg
+      ? 'Здравей! Питай ме за рецепти, техники, заместители или какво да сготвиш с наличните продукти.'
+      : 'Hey! Ask me about recipes, techniques, substitutions, or what to cook with what you have.';
+    addMessage('assistant', formatMessage(greetText));
+  }
+
+  // Update pill whenever user changes select
+  const scanSelectEl = document.getElementById('scanSelect');
+  if (scanSelectEl) scanSelectEl.addEventListener('change', setScanContextLabel);
+
+  applyMode();
+  translateUI();
+  greet();
+</script>
+
+</body>
+</html>

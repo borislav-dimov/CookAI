@@ -1,0 +1,970 @@
+/* ChefAI — Premium monochrome "liquid glass" UI
+   Theme: black/white (no pure black), subtle blur + shine, smooth interactions.
+*/
+
+:root{
+  --bg: #f4f5f7;
+  --bg2: #eeeff3;
+  --surface: rgba(255,255,255,0.72);
+  --surface-solid: #ffffff;
+  --text: #101114;
+  --muted: rgba(16,17,20,0.62);
+  --border: rgba(16,17,20,0.10);
+  --shadow: 0 14px 40px rgba(0,0,0,0.10);
+  --shadow-soft: 0 10px 24px rgba(0,0,0,0.08);
+  --ring: rgba(16,17,20,0.12);
+  --radius-lg: 26px;
+  --radius-md: 18px;
+  --radius-sm: 14px;
+  --blur: 18px;
+  --tap: transparent;
+}
+
+body.dark-mode{
+  --bg: #0f1012;        /* slightly brighter than pure black */
+  --bg2: #131418;
+  --surface: rgba(24,25,28,0.62);
+  --surface-solid: #17181b;
+  --text: rgba(255,255,255,0.94);
+  --muted: rgba(255,255,255,0.62);
+  --border: rgba(255,255,255,0.12);
+  --shadow: 0 18px 55px rgba(0,0,0,0.55);
+  --shadow-soft: 0 12px 28px rgba(0,0,0,0.45);
+  --ring: rgba(255,255,255,0.16);
+}
+
+/* --- Global reset / motion --- */
+*{ box-sizing:border-box; -webkit-tap-highlight-color: var(--tap); }
+html,body{ height:100%; }
+body{
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin:0;
+  padding:0;
+  background: radial-gradient(1200px 700px at 50% -10%, var(--bg2), var(--bg));
+  color: var(--text);
+  width:100vw;
+  /* allow desktop pages to fit without manual zoom */
+  overflow:auto;
+  display:flex;
+  justify-content:center;
+  font-size: 17.5px;      /* bigger base text for phone-first UI */
+  line-height: 1.35;
+}
+
+::selection{ background: rgba(255,255,255,0.35); }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; animation:none !important; scroll-behavior:auto !important; }
+}
+
+/* --- App shell (mobile frame) --- */
+.app-shell{
+  width:100%;
+  height:100%;
+  min-height: 100dvh;  /* better on mobile address bar */
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  overflow:hidden;
+  background: transparent;
+}
+
+@media (min-width: 900px){
+  body{ align-items:center; }
+  .app-shell{
+    max-width:414px;
+    height: min(896px, 92vh);     /* prevents cut-off */
+    border-radius: 42px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03));
+    transform: scale(0.96);       /* subtle “zoomed out” feel */
+    transform-origin: top center;
+  }
+}
+
+/* --- Top bar --- */
+.top-bar,
+.screen-header-bar{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 0 18px;
+  flex-shrink:0;
+  z-index: 20;
+  position:relative;
+  background: var(--surface);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border-bottom: 1px solid var(--border);
+}
+
+.screen-header-bar{ justify-content: space-between; }
+
+/* Header action buttons (e.g., "New Scan") should be compact */
+.screen-header-bar .btn-primary,
+.screen-header-bar .btn-secondary,
+.screen-header-bar .logout-btn{
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+}
+
+/* Keep header buttons from stretching */
+.screen-header-bar button{ width: auto; }
+
+.header-title,
+.screen-title{
+  font-size: 1.10rem;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+  color: var(--text);
+}
+
+/* Close / icon buttons */
+.icon-btn{
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font-size: 26px;
+  line-height: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
+}
+.icon-btn:hover{ background: rgba(255,255,255,0.16); border-color: var(--border); }
+.icon-btn:active{ transform: scale(0.96); }
+
+/* --- Camera viewport --- */
+.camera-container{
+  flex-grow:1;
+  position:relative;
+  overflow:hidden;
+  margin: 14px 22px;
+  border-radius: var(--radius-lg);
+  background: #000;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(255,255,255,0.10);
+  max-height: calc(100% - 60px - 80px - 28px);
+}
+#video-feed{ width:100%; height:100%; object-fit:cover; display:block; }
+
+.overlay-layer{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:10;
+  cursor:pointer;
+  background: radial-gradient(900px 400px at 50% 20%, rgba(255,255,255,0.10), rgba(0,0,0,0.15));
+  transition: background .25s ease;
+}
+.overlay-layer:hover{ background: radial-gradient(900px 400px at 50% 20%, rgba(255,255,255,0.14), rgba(0,0,0,0.18)); }
+
+.center-icon{
+  width: 64px;
+  height: 64px;
+  color: rgba(255,255,255,0.96);
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.45));
+  margin-bottom: 18px;
+}
+
+.instruction-text{
+  color: rgba(255,255,255,0.96);
+  font-size: 1.22rem;
+  font-weight: 800;
+  text-align:center;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.55);
+}
+.sub-text{
+  color: rgba(255,255,255,0.88);
+  font-size: 1.02rem;
+  margin-top: 3px;
+  font-weight: 600;
+  text-shadow: 0 8px 22px rgba(0,0,0,0.55);
+}
+
+/* --- Bottom nav --- */
+.bottom-nav{
+  height:80px;
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items:center;
+  justify-items:center;
+  padding: 10px 14px 8px;
+  gap: 0;
+  flex-shrink:0;
+  z-index: 20;
+  background: var(--surface);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border-top: 1px solid var(--border);
+}
+
+.nav-item{
+  width: 100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap: -0px;
+  padding: 6px 0;
+  text-decoration:none;
+  text-align:center;
+  font-size: 1.02rem;
+  font-weight: 650;
+  color: var(--muted);
+  transition: transform .18s ease, color .18s ease;
+}
+.nav-item:hover{ transform: translateY(-1px); color: var(--text); }
+.nav-item.active{ color: var(--text); font-weight: 800; }
+
+.nav-icon{
+  font-size: 32px;
+  line-height: 1;
+  display:block;
+}
+
+/* --- Floating upload (+) button on Scan page --- */
+.fab-upload{
+  position:absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: var(--shadow-soft);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  z-index: 15;
+  transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
+}
+body.dark-mode .fab-upload{ background: rgba(24,25,28,0.72); }
+.fab-upload:hover{ transform: translateY(-1px); border-color: var(--ring); }
+.fab-upload:active{ transform: scale(0.96); }
+.fab-icon{ font-size: 26px; }
+
+/* --- Chat --- */
+.chat-shell{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 14px 18px 0 18px;
+}
+
+.chat-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.chat-context{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-context label{
+  font-size: 0.86rem;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.chat-context select{
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  outline: none;
+}
+
+.chat-context .hint{
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.chat-log{
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 4px 12px 4px;
+}
+
+.msg{
+  max-width: 92%;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  margin: 10px 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+body.dark-mode .msg{ box-shadow: 0 14px 30px rgba(0,0,0,0.40); }
+
+.msg.user{
+  margin-left: auto;
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.66));
+}
+body.dark-mode .msg.user{
+  background: linear-gradient(180deg, rgba(30,30,34,0.82), rgba(18,18,20,0.62));
+}
+
+.msg.assistant{ margin-right: auto; }
+
+.chat-composer{
+  position: sticky;
+  bottom: 0;
+  padding: 10px 0 12px 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0), var(--bg));
+}
+
+.composer-inner{
+  display:flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: var(--shadow-soft);
+}
+
+.composer-inner textarea{
+  flex: 1;
+  resize: none;
+  min-height: 44px;
+  max-height: 160px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+.composer-actions{
+  display:flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.composer-btn{
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.72);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
+}
+body.dark-mode .composer-btn{ background: rgba(24,25,28,0.70); }
+.composer-btn:hover{ transform: translateY(-1px); border-color: var(--ring); }
+.composer-btn:active{ transform: scale(0.96); }
+.composer-btn ion-icon{ font-size: 22px; color: var(--text); }
+
+/* Chat extras (bubbles, typing, plus menu, context sheet) */
+.chat-pills{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 2px 10px 2px;
+}
+
+.pill{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+
+.pill-ic{ font-size: 18px; color: var(--muted); }
+.pill-txt{ font-weight: 700; color: var(--text); max-width: 240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pill-x{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.65);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition: transform .18s ease, border-color .18s ease;
+}
+body.dark-mode .pill-x{ background: rgba(24,25,28,0.70); }
+.pill-x:hover{ transform: translateY(-1px); border-color: var(--ring); }
+.pill-x:active{ transform: scale(0.96); }
+
+.plus-wrap{ position: relative; }
+.plus-menu{
+  position:absolute;
+  right: 0;
+  bottom: 58px;
+  width: 210px;
+  padding: 10px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.86);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: var(--shadow);
+  transform: translateY(8px);
+  opacity: 0;
+  pointer-events:none;
+  transition: opacity .16s ease, transform .16s ease;
+  z-index: 40;
+}
+body.dark-mode .plus-menu{ background: rgba(22,22,26,0.80); }
+.plus-menu.open{ opacity: 1; transform: translateY(0); pointer-events:auto; }
+
+.plus-item{
+  width: 100%;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor:pointer;
+  font-weight: 750;
+  color: var(--text);
+  transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
+}
+.plus-item ion-icon{ font-size: 18px; color: var(--muted); }
+.plus-item:hover{ background: rgba(0,0,0,0.04); border-color: var(--border); transform: translateY(-1px); }
+body.dark-mode .plus-item:hover{ background: rgba(255,255,255,0.06); }
+.plus-item:disabled{ opacity: 0.5; cursor:not-allowed; transform:none; }
+
+.plus-hint{
+  margin-top: 8px;
+  font-size: 0.86rem;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.glass-select{
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  outline: none;
+}
+
+.typing{
+  display:flex;
+  gap: 6px;
+  align-items:center;
+}
+.typing-dot{
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(16,17,20,0.42);
+  animation: typingBounce 1s infinite;
+}
+body.dark-mode .typing-dot{ background: rgba(255,255,255,0.48); }
+.typing-dot:nth-child(2){ animation-delay: .12s; }
+.typing-dot:nth-child(3){ animation-delay: .24s; }
+@keyframes typingBounce{
+  0%, 80%, 100%{ transform: translateY(0); opacity: 0.55; }
+  40%{ transform: translateY(-5px); opacity: 1; }
+}
+
+.msg-list{ margin: 6px 0 6px 22px; padding: 0; }
+.msg-list li{ margin: 6px 0; }
+.msg-line{ margin: 4px 0; }
+.msg-spacer{ height: 10px; }
+
+.sheet-backdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,0.22);
+  z-index: 80;
+}
+.sheet{
+  position:absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 81;
+  padding: 12px 16px 18px 16px;
+  border-top-left-radius: 26px;
+  border-top-right-radius: 26px;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: 0 -20px 50px rgba(0,0,0,0.18);
+  transform: translateY(12px);
+  opacity: 0;
+  transition: transform .16s ease, opacity .16s ease;
+}
+body.dark-mode .sheet{ background: rgba(22,22,26,0.90); box-shadow: 0 -26px 70px rgba(0,0,0,0.55); }
+.sheet.open{ transform: translateY(0); opacity: 1; }
+.sheet-handle{
+  width: 64px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.10);
+  margin: 4px auto 12px auto;
+}
+body.dark-mode .sheet-handle{ background: rgba(255,255,255,0.14); }
+.sheet-title{ font-size: 1.05rem; font-weight: 850; margin: 0 0 12px 0; color: var(--text); }
+.sheet-row{ display:flex; gap: 10px; align-items:center; }
+.sheet-actions{ margin-top: 14px; display:flex; justify-content:flex-end; }
+
+.image-pill{
+  display:none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 650;
+}
+.image-pill.show{ display:flex; justify-content: space-between; align-items:center; gap: 10px; }
+.image-pill button{
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+
+/* --- Screens / overlays --- */
+#results-screen, #analysis-screen, #settings-screen, #cooking-screen{
+  position:absolute;
+  inset:0;
+  background: radial-gradient(1200px 700px at 50% -10%, var(--bg2), var(--bg));
+  /* push slightly beyond the viewport to avoid any edge peeking on some zoom levels */
+  transform: translateY(110%);
+  transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+  z-index: 50;
+  display:flex;
+  flex-direction:column;
+}
+
+#analysis-screen{
+  justify-content:center;
+  align-items:center;
+  background: var(--bg);
+}
+#analysis-message{ font-size: 1.15rem; font-weight: 750; color: var(--text); margin-top: 18px; }
+
+/* --- Settings content (index overlay + settings page) --- */
+.settings-content,
+.content-container{
+  padding: 20px;
+  overflow-y:auto;
+  flex-grow:1;
+  min-height: 0;
+}
+
+.section-title{
+  font-size: 1.65rem;
+  margin: 0 0 22px 0;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+
+.setting-group{ margin-bottom: 26px; }
+.setting-group h3{
+  font-size: 1.0rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: var(--muted);
+}
+
+/* Segmented control */
+.option-row{
+  display:flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+.option-btn{
+  flex:1;
+  padding: 12px 10px;
+  text-align:center;
+  border-radius: 999px;
+  cursor:pointer;
+  font-weight: 750;
+  color: var(--muted);
+  user-select:none;
+  transition: transform .16s ease, background-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.option-btn:hover{ transform: translateY(-1px); color: var(--text); }
+.option-btn.active{
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.18));
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+  border: 1px solid var(--border);
+}
+body.dark-mode .option-btn.active{
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+}
+
+/* --- Cards --- */
+.recipe-card,
+.user-info,
+.scan-card,
+.time-box{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+.recipe-card{ overflow:hidden; margin-bottom: 18px; }
+.recipe-scroll{ padding: 20px; overflow-y:auto; flex-grow:1; }
+.recipe-img{ width:100%; height:200px; object-fit:cover; display:block; }
+.recipe-body{ padding: 18px 18px 20px; }
+
+.user-info{ display:flex; align-items:center; padding: 16px; margin-bottom: 24px; }
+.user-avatar{ font-size: 42px; color: var(--text); opacity: 0.85; margin-right: 14px; }
+.user-greeting h3{ margin:0; font-size: 1.10rem; color: var(--text); }
+.user-greeting p{ margin: 2px 0 0 0; font-size: 0.92rem; color: var(--muted); }
+
+.scan-card{
+  display:flex;
+  align-items:center;
+  padding: 12px;
+  gap: 14px;
+  cursor:pointer;
+  text-decoration:none;
+  color: inherit;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.scan-card:hover{ transform: translateY(-1px); box-shadow: 0 14px 34px rgba(0,0,0,0.10); }
+.scan-img{ width:64px; height:64px; object-fit:cover; border-radius: 12px; }
+.scan-info h4{ margin:0; font-size: 1.00rem; font-weight: 850; }
+.scan-info p{ margin:2px 0 0 0; font-size: 0.90rem; color: var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 240px; }
+
+/* --- Cooking screen --- */
+.cook-header,
+.cook-controls{
+  padding: 18px 20px;
+  background: var(--surface);
+  border-color: var(--border);
+  border-style: solid;
+  border-width: 1px 0 1px 0;
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+.cook-header{ border-width: 0 0 1px 0; }
+.cook-controls{ border-width: 1px 0 0 0; display:flex; justify-content:space-between; gap: 12px; }
+
+.cook-content{ flex-grow:1; display:flex; align-items:center; justify-content:center; padding: 28px; text-align:center; overflow-y:auto; }
+.cook-text{ font-size: 1.65rem; line-height:1.4; font-weight: 900; letter-spacing: -0.2px; }
+
+/* --- Premium liquid-glass buttons --- */
+.btn-primary,
+.btn-secondary,
+.logout-btn{
+  --btn-bg: rgba(255,255,255,0.18);
+  --btn-bg2: rgba(255,255,255,0.10);
+  --btn-text: var(--text);
+
+  appearance:none;
+  border: 1px solid var(--border);
+  color: var(--btn-text);
+  padding: 14px 22px;       /* bigger tap target */
+  border-radius: 999px;
+  font-weight: 850;
+  font-size: 1.05rem;       /* bigger text */
+  letter-spacing: 0.15px;
+  cursor:pointer;
+  background: linear-gradient(180deg, var(--btn-bg), var(--btn-bg2));
+  box-shadow: 0 14px 34px rgba(0,0,0,0.12);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+  position: relative;
+  overflow:hidden;
+}
+
+/* Shine */
+.btn-primary::before,
+.btn-secondary::before,
+.logout-btn::before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  background: radial-gradient(800px 80px at -10% 0%, rgba(255,255,255,0.75), transparent 40%),
+              radial-gradient(800px 80px at 110% 100%, rgba(255,255,255,0.40), transparent 45%);
+  opacity: 0.20;
+  pointer-events:none;
+  transition: opacity .16s ease;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.logout-btn:hover{ transform: translateY(-1px); box-shadow: 0 18px 45px rgba(0,0,0,0.16); }
+.btn-primary:hover::before,
+.btn-secondary:hover::before,
+.logout-btn:hover::before{ opacity: 0.32; }
+
+.btn-primary:active,
+.btn-secondary:active,
+.logout-btn:active{ transform: translateY(0) scale(0.98); box-shadow: 0 12px 28px rgba(0,0,0,0.14); }
+
+/* Primary = slightly darker pill */
+.btn-primary{ --btn-bg: rgba(16,17,20,0.18); --btn-bg2: rgba(16,17,20,0.10); }
+body.dark-mode .btn-primary{ --btn-bg: rgba(255,255,255,0.12); --btn-bg2: rgba(255,255,255,0.06); }
+
+/* Secondary = lighter pill */
+.btn-secondary{ --btn-bg: rgba(255,255,255,0.35); --btn-bg2: rgba(255,255,255,0.16); }
+body.dark-mode .btn-secondary{ --btn-bg: rgba(255,255,255,0.10); --btn-bg2: rgba(255,255,255,0.05); }
+
+/* Full-width helper */
+.btn-block{ width:100%; }
+
+/* --- Inputs --- */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+textarea{
+  width:100%;
+  padding: 14px 16px;      /* bigger tap target */
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  font-size: 1.02rem;      /* bigger text */
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  transition: box-shadow .18s ease, border-color .18s ease, background-color .18s ease;
+}
+input::placeholder, textarea::placeholder{ color: rgba(255,255,255,0.55); }
+body:not(.dark-mode) input::placeholder, body:not(.dark-mode) textarea::placeholder{ color: rgba(16,17,20,0.38); }
+
+input:focus, textarea:focus{ box-shadow: 0 0 0 4px var(--ring); }
+
+/* Error message */
+.error-message{
+  background: rgba(255,255,255,0.70);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 14px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+  font-size: 1.0rem;
+  font-weight: 750;
+}
+body.dark-mode .error-message{ background: rgba(255,255,255,0.06); }
+
+/* Settings page back button */
+.back-btn{
+  font-size: 26px;
+  color: var(--text);
+  opacity: 0.90;
+  cursor:pointer;
+  text-decoration:none;
+  transition: transform .16s ease, opacity .16s ease;
+}
+.back-btn:hover{ transform: translateX(-1px); opacity: 1; }
+
+/* Logout button (monochrome) */
+.logout-btn{ text-decoration:none; display:block; text-align:center; }
+
+/* Misc helpers */
+.muted{ color: var(--muted); }
+
+/* ---------- PAGE-SPECIFIC EXTRAS (Scan details + Cooking mode) ---------- */
+
+.close-btn{
+  width: 42px; height: 42px;
+  display: inline-flex; align-items:center; justify-content:center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+.close-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow-soft); }
+.close-btn:active{ transform: scale(0.98); }
+
+/* Login form spacing + centered button */
+.login-form{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.login-form p,
+.login-form small{ margin: 0; }
+.login-form .btn-primary,
+.login-form .btn-secondary,
+.login-form .logout-btn{
+  align-self: center;
+  min-width: 220px;
+}
+
+.logout-btn-container{ margin-top: 40px; margin-bottom: 20px; }
+
+/* Scan details recipe content */
+.recipe-header{ padding: 20px; }
+.recipe-title{ font-size: 1.30rem; font-weight: 850; margin: 0 0 8px 0; letter-spacing: -0.01em; }
+.recipe-description{ color: var(--muted); margin: 0; }
+
+.recipe-stats{ display:flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.stat-box{
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+  min-width: 110px;
+}
+body.dark-mode .stat-box{ box-shadow: 0 14px 30px rgba(0,0,0,0.45); }
+
+.time-box{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.skill-box{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.55));
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+body.dark-mode .skill-box{ background: linear-gradient(180deg, rgba(28,28,32,0.70), rgba(18,18,20,0.55)); }
+
+.recipe-section-title{ font-weight: 850; margin: 22px 0 10px 0; letter-spacing: -0.01em; font-size: 1.05rem; }
+.recipe-list{ margin: 0; padding-left: 18px; color: var(--text); }
+.recipe-list li{ margin: 8px 0; color: var(--muted); font-size: 0.98rem; }
+
+/* Cooking mode (Scan details & in-app) */
+.mode-content{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.mode-content.active{ display: flex; }
+
+.mode-controls{
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: min(540px, calc(100% - 36px));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+
+.step-counter{
+  font-weight: 850;
+  color: var(--text);
+  opacity: 0.9;
+  font-size: 1.02rem;
+}
+.step-instruction{
+  font-size: 1.52rem;
+  line-height: 1.35;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.start-cooking-btn{ width: 100%; }
+
+/* CTA scan card (Account page) */
+.scan-card--cta{
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.75), rgba(255,255,255,0.55));
+  border: 1px solid var(--border);
+}
+body.dark-mode .scan-card--cta{
+  background: linear-gradient(135deg, rgba(28,28,32,0.70), rgba(18,18,20,0.55));
+}
+
+/* Slightly tighter on very small phones */
+@media (max-width: 360px){
+  body{ font-size: 16.8px; }
+  .login-form .btn-primary,
+  .login-form .btn-secondary,
+  .login-form .logout-btn{ min-width: 200px; }
+}
