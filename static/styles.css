@@ -1,4 +1,4 @@
-/* ChefAI — Premium monochrome "liquid glass" UI
+/* CookAI — Premium monochrome "liquid glass" UI
    Theme: black/white (no pure black), subtle blur + shine, smooth interactions.
 */
 
@@ -433,7 +433,8 @@ body.dark-mode .pill-x{ background: rgba(24,25,28,0.70); }
 .plus-wrap{ position: relative; }
 .plus-menu{
   position:absolute;
-  right: 0;
+  left: 6px;
+  right: auto;
   bottom: 58px;
   width: 210px;
   padding: 10px;

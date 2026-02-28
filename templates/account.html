@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-<title>ChefAI - Account</title>
+<title>CookAI - Account</title>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
@@ -20,7 +20,7 @@
     <div class="content-container">
         
         {% if not user.is_logged_in %}
-            <h2 class="section-title" id="ui-welcome-title">Welcome to ChefAI</h2>
+            <h2 class="section-title" id="ui-welcome-title">Welcome to CookAI</h2>
             
             {# NEW: Display error message if 'error_message' is passed from Flask #}
             {% if error_message %}
@@ -102,7 +102,7 @@
     const i18n = {
         'English': {
             'header-title': 'Account',
-            'welcome-title': 'Welcome to ChefAI',
+            'welcome-title': 'Welcome to CookAI',
             'login-prompt': 'Enter a username and password to log in or create an account.', 
             'username-placeholder': 'Your Username', 
             'password-placeholder': 'Password',
@@ -121,7 +121,7 @@
         },
         'Bulgarian': {
             'header-title': 'Профил',
-            'welcome-title': 'Добре дошли в ChefAI',
+            'welcome-title': 'Добре дошли в CookAI',
             'login-prompt': 'Въведете потребителско име и парола, за да влезете или да създадете акаунт.', 
             'username-placeholder': 'Вашето Потребителско Име',
             'password-placeholder': 'Парола', 

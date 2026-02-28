@@ -33,7 +33,7 @@ TRANSLATIONS = {
         "logout": "Log Out",
         
         # Account Page (UPDATED TEXT FOR NEW LOGIN FLOW)
-        "welcome_title": "Welcome to ChefAI",
+        "welcome_title": "Welcome to CookAI",
         "login_prompt": "Enter a username and password to log in or create an account.",
         "username_placeholder": "Your Username",
         "password_placeholder": "Password", # NEW
@@ -74,7 +74,7 @@ TRANSLATIONS = {
         "logout": "Изход",
         
         # Account Page (UPDATED TEXT FOR NEW LOGIN FLOW)
-        "welcome_title": "Добре дошли в ChefAI",
+        "welcome_title": "Добре дошли в CookAI",
         "login_prompt": "Въведете потребителско име и парола, за да влезете или да създадете акаунт.",
         "username_placeholder": "Вашето потребителско име",
         "password_placeholder": "Парола", # NEW
@@ -138,7 +138,7 @@ model = genai.GenerativeModel(
     generation_config=generation_config,
     # System Instruction sets the base role and required JSON format
     system_instruction="""
-    You are ChefAI. Analyze the image provided to identify ingredients and suggest 2 distinct recipes.
+    You are CookAI. Analyze the image provided to identify ingredients and suggest 2 distinct recipes.
     
     You must return the response in this specific JSON format:
     [
@@ -169,7 +169,7 @@ chat_model = genai.GenerativeModel(
     safety_settings=safety_settings,
     generation_config=chat_generation_config,
     system_instruction=(
-        "You are ChefAI Chat, a friendly expert cooking assistant. "
+        "You are CookAI Chat, a friendly expert cooking assistant. "
         "Answer questions about cooking, ingredients, substitutions, techniques, food safety, and recipes. "
         "If the user provides a past scan, use it as context. "
         "Be concise, practical, and give step-by-step instructions when appropriate. "
